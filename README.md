@@ -1,4 +1,5 @@
 #Phenesthe
+
 '_Phenesthe_' (origin φαίνεσθαι) is a system for the representation and processing of instantaneous and durative temporal phenomena. Temporal phenomena may be:
 - events (instantaneous)
 - states (durative)
