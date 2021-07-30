@@ -12,7 +12,7 @@ Given an input stream of input phenomena '_Phenesthe_' will produce the instants
 - An engine that allows the recognition of the instants and intervals at which the user defined phenomena are true/hold
 
 ## Installation & Getting Started
-'_Phenesthe'_ requires a prolog installation for it to run. Specifically it has been tested under [SWI-Prolog](www.swi-prolog.org) 7.6.4 and [YAP](https://www.dcc.fc.up.pt/~vsc/yap/) 6.2.2.
+'_Phenesthe'_ requires a prolog installation for it to run. Specifically it has been tested under [SWI-Prolog](www.swi-prolog.org) 7.6.4.
 
 The samples folder includes an example usage of '_Phenesthe'_. ```definitions.prolog``` contains definitions of temporal phenomena, the ```narrative.prolog``` contains the input phenomena and 'run.prolog' loads _Phenesthe_ and preprocesses the phenomena definitions.
 
