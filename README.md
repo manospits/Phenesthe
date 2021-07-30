@@ -1,10 +1,10 @@
 # Phenesthe
-'_Phenesthe_' (origin φαίνεσθαι) is a system for the representation and processing of instantaneous and durative temporal phenomena. Temporal phenomena may be:
+'_Phenesthe_' (orig. φαίνεσθαι) is a system for the representation and processing of instantaneous and durative temporal phenomena. Temporal phenomena may be:
 - events (instantaneous)
 - states (durative)
 - dynamic temporal phenomena (durative)
 
-Given an input stream of input phenomena '_Phenesthe_' will produce the instants or intervals at which user defined temporal phenomena are true or hold.
+Given an input stream of input phenomena '_Phenesthe_' will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "M. Pitsikalis, A. Lisitsa and Shan Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. (TBA)"
 ## Features
 
 - A user friendly language that allows the definition of temporal phenomena
