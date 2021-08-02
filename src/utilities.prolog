@@ -177,9 +177,6 @@ formulae_ints_type(nd,nd,nd).
 
 setof_empty(V,F,L):-
     setof(V,F,L) *-> true; L = [].
-%setof_empty(V,F,[]):-
-    %\+(setof(V,F,_)).
-%setof(Object, Goal, List) *-> true ; List = []
 
 split_on_t(_,[],[],[]).
 split_on_t(Tqmw,[[TS,TE]|TailLIL],[[TS,Tqmw]|TailLILbeforeTqmw],[[Tqmw,TE]|TailLILafterTqmw]):-
@@ -194,8 +191,8 @@ split_on_t(Tqmw,[[TS,TE]|TailLIL],TailLILbeforeTqmw,[[TS,TE]|TailLILafterTqmw]):
 
 splice_interval_sets([A|B],[],[A|B]).
 splice_interval_sets([],[A|B],[A|B]).
-splice_interval_sets([[Ts,T]|_IL1Tail],[[T,Te]|IL2Tail],[[Ts,Te]|IL2Tail]).
-splice_interval_sets([[Ts1,Te1]|_IL1Tail],[[Ts2,Te2]|IL2Tail],[[Ts1,Te1],[Ts2,Te2]|IL2Tail]):-Te1\=Ts2.
+splice_interval_sets([[ATS,T]|_],[[T,BTE]|IL],[[ATS,BTE]|IL]).
+splice_interval_sets([[ATS,ATE]|_],[[BTS,BTE]|IL],[[ATS,ATE],[BTS,BTE]|IL]):-ATE\=BTS.
 
 last_ending_temporal_entities([],[]).
 last_ending_temporal_entities([A|R],LastEntities):-
@@ -284,7 +281,6 @@ create_window_instants(StartTime,EndTime,[StartTime|R]):-
     create_window_instants(StartTime1,EndTime,R).
 
 
-
 assert_if_not_exists(X):-
     \+X,assert(X).
 assert_if_not_exists(X):-
@@ -315,48 +311,6 @@ ground_check(A,no):-
     \+ground(A).
 
 
-sorted_join([],[],AnGD,BnGD,_LAtVars,_RAtVars,LRVars,[(LRVars,AnGD,BnGD)]).
-
-sorted_join([(_,VarsA,DA)|ATail],[],AnGD,BnGD,LAtVars,RAtVars,LRVars,[(LRVarsAssigned,DA,BnGD)|JoinedTail]):-
-    assign_vars(VarsA,_,LAtVars,RAtVars,LRVars,LRVarsAssigned),
-    sorted_join(ATail,[],AnGD,BnGD,LAtVars,RAtVars,LRVars,JoinedTail).
-
-sorted_join([],[(_,VarsB,DB)|BTail],AnGD,BnGD,LAtVars,RAtVars,LRVars,[(LRVarsAssigned,AnGD,DB)|JoinedTail]):-
-    assign_vars(_,VarsB,LAtVars,RAtVars,LRVars,LRVarsAssigned),
-    sorted_join([],BTail,AnGD,BnGD,LAtVars,RAtVars,LRVars,JoinedTail).
-
-sorted_join([(VarsI,VarsA,DA)|ATail],[(VarsI,VarsB,DB)|BTail],AnGD,BnGD,LAtVars,RAtVars,LRVars,Joined):-
-    advance(ATail,VarsI,ATailP,ATailN),
-    advance(BTail,VarsI,BTailP,BTailN),
-    A=[(VarsI,VarsA,DA)|ATailP],
-    B=[(VarsI,VarsB,DB)|BTailP],
-    findall((LRVarsAssigned,DA1,DB1),
-            (
-                member((VI,VA,DA1),A),
-                member((VI,VB,DB1),B),
-                assign_vars(VA,VB,LAtVars,RAtVars,LRVars,LRVarsAssigned)
-            ),CurrentJoin),
-    sorted_join(ATailN,BTailN,AnGD,BnGD,LAtVars,RAtVars,LRVars,JoinedTail),
-    append(CurrentJoin,JoinedTail,Joined).
-
-sorted_join([(VarsIA,VarsA,DA)|ATail],[(VarsIB,VarsB,DB)|BTail],AnGD,BnGD,LAtVars,RAtVars,LRVars,[(LRVarsAssigned,DA,BnGD)|JoinedTail]):-
-    VarsIA @< VarsIB,
-    assign_vars(VarsA,_,LAtVars,RAtVars,LRVars,LRVarsAssigned),
-    sorted_join(ATail,[(VarsIB,VarsB,DB)|BTail],AnGD,BnGD,LAtVars,RAtVars,LRVars,JoinedTail).
-
-sorted_join([(VarsIA,VarsA,DA)|ATail],[(VarsIB,VarsB,DB)|BTail],AnGD,BnGD,LAtVars,RAtVars,LRVars,[(LRVarsAssigned,AnGD,DB)|JoinedTail]):-
-    VarsIB @< VarsIA,
-    assign_vars(_,VarsB,LAtVars,RAtVars,LRVars,LRVarsAssigned),
-    sorted_join([(VarsIA,VarsA,DA)|ATail],BTail,AnGD,BnGD,LAtVars,RAtVars,LRVars,JoinedTail).
-
-assign_vars(VarsA,VarsB,LAtVars,RAtVars,LRVars,LRVarsAssigned):-
-    findall(L1,(VarsA=LAtVars,VarsB=RAtVars,LRVars=L1),[LRVarsAssigned]).
-
-advance([],_A,[],[]).
-advance([(A,B,C)|TailN],AI,[],[(A,B,C)|TailN]):-A\=AI.
-advance([(A,B,C)|Tail],A,[(A,B,C)|TailP],TailN):-
-    advance(Tail,A,TailP,TailN).
-
 my_setval(X,C):-
     ((val(X,_),!,retract(val(X,_)));
      (\+val(X,_))),
@@ -370,37 +324,3 @@ clean_from_unk([[_A,unk]|Tail],Cleaned):-
 clean_from_unk([[A,B]|Tail],[[A,B]|Cleaned]):-
     clean_from_unk(Tail,Cleaned).
 
-%old
-%merge ilse (used in temporal union)
-%merge_ilse([],[],[]).
-%merge_ilse([],[[B1,B2]|BL],[(B1,(1,0))|RIL]):-
-    %merge_ilse([],[[B2]|BL],RIL).
-%merge_ilse([],[[B2]|BL],[(B2,(0,1))|RIL]):-
-    %merge_ilse([],BL,RIL).
-%merge_ilse([[A1,A2]|AL],[],[(A1,(1,0))|RIL]):-
-    %merge_ilse([[A2]|AL],[],RIL).
-%merge_ilse([[A2]|AL],[],[(A2,(0,1))|RIL]):-
-    %merge_ilse(AL,[],RIL).
-%merge_ilse([A|AL],[B|BL],[(FA,(XC1,XC2))|RIL]):-
-    %getf(A,FA,AR,(XA1,XA2)),
-    %getf(B,FB,BR,(XB1,XB2)),
-    %FA=FB,
-    %XC1 is XA1 + XB1,
-    %XC2 is XA2 + XB2,
-    %append(BR,BL,BN),
-    %append(AR,AL,AN),
-    %merge_ilse(AN,BN,RIL).
-
-%merge_ilse([A|AL],[B|BL],[(FA,XA)|RIL]):-
-    %getf(A,FA,AR,XA),
-    %getf(B,FB,_,_),
-    %FA<FB,
-    %append(AR,AL,AN),
-    %merge_ilse(AN,[B|BL],RIL).
-
-%merge_ilse([A|AL],[B|BL],[(FB,XB)|RIL]):-
-    %getf(A,FA,_,_),
-    %getf(B,FB,BR,XB),
-    %FB<FA,
-    %append(BR,BL,BN),
-    %merge_ilse([A|AL],BN,RIL).
