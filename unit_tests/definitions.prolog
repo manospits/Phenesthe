@@ -75,4 +75,8 @@ dynamic_phenomenon drops_objects_when_hungry(Person) :=
 dynamic_phenomenon sad_before_hungry(Person) :=
     sad(Person) before hungry(Person).
 
+dynamic_phenomenon hunger_starts_hungry(Person) :=
+    hunger(Person) starts hungry(Person).
 
+dynamic_phenomenon ate_ends_hungry(Person) :=
+    ate(Person,_Food) finishes hungry(Person).

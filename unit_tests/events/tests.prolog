@@ -1,5 +1,5 @@
 :-begin_tests(events).
-:-['../../loader.prolog'].
+:-['../../phenesthe.prolog'].
 :-['../definitions.prolog'].
 :-['./narrative.prolog'].
 
