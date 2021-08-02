@@ -1,5 +1,5 @@
 # Phenesthe
-***
+
 '_Phenesthe_' (orig. φαίνεσθαι) is a system for the representation and processing of instantaneous and durative temporal phenomena. Temporal phenomena may be:
 - events (instantaneous)
 - states (durative)
@@ -125,4 +125,3 @@ startEndOp ::= ("start"|"end")"("intervalOperation")";
 While _Phenesthe_ has undergone through testing, it's still under development.  Therefore some bugs may exist :) . 
 ## License
 This project is licensed under the terms of the [GNU General Public License version 3.0](https://www.gnu.org/licenses/gpl-3.0.html)
-***
