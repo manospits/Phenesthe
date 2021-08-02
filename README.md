@@ -5,8 +5,7 @@
 - states (durative)
 - dynamic temporal phenomena (durative)
 
-Given an input stream of input phenomena '_Phenesthe_' will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in   
- "M. Pitsikalis, A. Lisitsa and Shan Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. (TBA)"
+Given an input stream of input phenomena '_Phenesthe_' will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and Shan Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. (TBA)_"
 ## Features
 
 - A user friendly language that allows the definition of temporal phenomena
@@ -78,7 +77,7 @@ state_phenomenon happy_with_money(Person) :=
 ```
 The ```happy_with_money(Person)```  phenomenon holds true  for the periods a ```Person``` is happy and has money. In detail, a ```Person``` starts being happy when he gains something, and continues to be happy until he loses something.
 **Dynamic temporal phenomena** are durative phenomena that may hold on non-disjoint intervals. Dynamic temporal phenomena are defined in terms of _non disjoint interval formulae_. For example: 
-```
+```prolog
 dynamic_phenomenon drops_objects_when_hungry(Person) :=
     hungry(Person) contains drop(Person,_Object).
 ```
