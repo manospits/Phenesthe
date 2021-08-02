@@ -47,29 +47,39 @@ test(case6):-
 test(case7):-
     findall(L,dynamic_phenomenon_intervals(ate_ends_hungry(bob),L),[[[1,8]]]).
 
+% equals & intersection
+test(case8):-
+    findall(L, dynamic_phenomenon_intervals(happy_equals_feels_inter_happy(bob),L),[[[6,8]]]).
+
+%overlaps
+test(case9):-
+    findall(L, dynamic_phenomenon_intervals(possess_overlaps(bob,coin,wallet),L),[[[3,inf]]]),
+    findall(L, dynamic_phenomenon_intervals(possess_overlaps(alice,wallet,flower),L),[[[4,inf]]]).
+
+
 test(query2):-
     assert_input_phenomena(15),
     recognition_query(5,5,15).
 
 % meets d-d window
-test(case8):-
+test(case10):-
     findall(L,dynamic_phenomenon_intervals(sad_then_happy(bob),L),[[[8,inf]]]).
 
 % before d-d (retained from last window)
-test(case9):-
+test(case11):-
     findall(L,dynamic_phenomenon_intervals(sad_before_hungry(bob),L),[[[8,inf]]]).
 
 % contains d-t
-test(case10):-
+test(case12):-
     findall(L,dynamic_phenomenon_intervals(drops_objects_when_hungry(alice),L),[[[1,14]]]).
 
 %starts
-test(case11):-
+test(case13):-
     findall(L,dynamic_phenomenon_intervals(hunger_starts_hungry(bob),L),Z1),
     findall(L,state_intervals(hungry(bob),L),Z2),
     Z1=Z2.
 
-test(case12):-
+test(case14):-
     findall(L,dynamic_phenomenon_intervals(ate_ends_hungry(alice),L),[[[1,14]]]),
     findall(L,dynamic_phenomenon_intervals(ate_ends_hungry(bob),L),[]).
 

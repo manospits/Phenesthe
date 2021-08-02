@@ -80,3 +80,9 @@ dynamic_phenomenon hunger_starts_hungry(Person) :=
 
 dynamic_phenomenon ate_ends_hungry(Person) :=
     ate(Person,_Food) finishes hungry(Person).
+
+dynamic_phenomenon happy_equals_feels_inter_happy(Person) :=
+    happy(Person) equals (feels(Person) intersection happy(Person)).
+
+dynamic_phenomenon possess_overlaps(Person,X,Y) :=
+    possess(Person,X) overlaps possess(Person,Y).
