@@ -63,7 +63,7 @@ test(query2):-
 
 % meets d-d window
 test(case10):-
-    findall(L,dynamic_phenomenon_intervals(sad_then_happy(bob),L),[[[8,inf]]]).
+    findall(L,dynamic_phenomenon_intervals(sad_then_happy(bob),L),[[[8,15]]]).
 
 % before d-d (retained from last window)
 test(case11):-

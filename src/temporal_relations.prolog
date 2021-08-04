@@ -14,7 +14,6 @@ compute_relation_intervals(equals,FT,A,B,IL):-compute_equals_intervals(FT,A,B,IL
 %computation of before intervals
 %------------------------------------------------------------
 %------------------------------------------------------------
-%todo fix the issue (change Tcrit to a more sensible value)
 compute_before_intervals(_,[],[],[],[],_).
 compute_before_intervals(_,[],[_],[],[],_).
 compute_before_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
@@ -69,7 +68,7 @@ compute_before_intervals(nd,[A|RL],[B|RR],I,NonRedundantA,T):-
       )
       ;
       (
-      %if not in the above case then we can safely use ramaining A inntervals
+      %if not in the above case then we can safely use ramaining A intervals
       compute_before_intervals(nd,NRL,NRR,IL,NonRedundantAIL,T)
       )
     ),
@@ -84,10 +83,10 @@ compute_before_intervals2(nd,[],[B|BI],CLOSR,[],I,NonRedundantA,T):-
 
 
 compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,NRL,I,NonRedundantA,T):-
-    temporal_information(A,_TSA,TEA,V),
+    temporal_information(A,_TSA,TEA,V), %V contains the TSBs that this interval was matched in a previous query
     temporal_information(B,TSB,_TEB,_),
     V\=[],
-    member(TSB,V),!,
+    member(TSB,V),!, 
     ((CLOS=[C|_],
       temporal_information(C,_TSC,TEC,_),
       TEC=TEA);
@@ -98,7 +97,7 @@ compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,NRL,I,NonRedundantA,T):-
     temporal_information(A,_TSA,_TEA,V),
     temporal_information(B,TSB,_TEB,_),
     V\=[],
-    \+((member(TSB,V))),!,
+    \+((member(TSB,V))),!, %if B not member of V A
     compute_before_intervals2(nd,RL,[B|RR],CLOS,NRL,I,NonRedundantA,T).
 
 %current interval of A satisfies the conditions and is closest
@@ -148,7 +147,9 @@ compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,[A|NRL],I,NonRedundantA,T):-
 %------------------------------------------------------------
 compute_meets_intervals(_,[],[],[],[],_):-!.
 compute_meets_intervals(_,[],[_|_],[],[],_):-!.
-compute_meets_intervals(_,[_|_],[],[],[],_):-!.
+compute_meets_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
+    unk_or_inf_temporal_entities([A|R],AUI),
+    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
 
 %------------------------------------------------------------
 %participating phenomena are states
@@ -222,7 +223,10 @@ compute_meets_intervals2(nd,[],[B|RR], [], CORS, IL, NonRedundantA, Tcrit):-
 %------------------------------------------------------------
 compute_overlaps_intervals(_,[],[],[],[],_):-!.
 compute_overlaps_intervals(_,[],[_|_],[],[],_):-!.
-compute_overlaps_intervals(_,[_|_],[],[],[],_):-!.
+compute_overlaps_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
+    unk_or_inf_temporal_entities([A|R],AUI),
+    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
+
 
 %------------------------------------------------------------
 %participating phenomena are states
@@ -235,7 +239,7 @@ compute_overlaps_intervals(d,[A|RL],[B|RR],[[TSA,unk]|IL],NonRedundantA,Tcrit):-
     lt(TSA,TSB),gt(TEA,TSB),!,
     % no need to retain information here; either unk or inf
     compute_overlaps_intervals(d,RL,RR,IL,NonRedundantA,Tcrit).
-%satisfied partially and completely **** in the case end instant
+%satisfied partially and completely **** in the case the ending instant
 %of b is unk, the code works as it is
 compute_overlaps_intervals(d,[A|RL],[B|RR],[[TSA,TEB]|IL],NonRedundantA,Tcrit):-
     temporal_information(A,TSA,TEA,_V1),
@@ -315,8 +319,11 @@ compute_overlaps_intervals2(nd,[],B, [], CORS, IL, NonRedundantA, Tcrit):-
 %------------------------------------------------------------
 %------------------------------------------------------------
 compute_finishes_intervals(_,[],[],[],_):-!.
-compute_finishes_intervals(_,[],[_|_],[],_):-!.
+compute_finishes_intervals(_,[],[B|R],IL,Tcrit):-!,
+    unk_or_inf_temporal_entities([B|R],BUI),
+    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],BUI, IL, _,Tcrit).
 compute_finishes_intervals(_,[_|_],[],[],_):-!.
+
 
 %------------------------------------------------------------
 %participating phenomena are states
@@ -602,7 +609,9 @@ compute_equals_intervals2(nd,[],[_|_RR], [], _CORS, []).
 %------------------------------------------------------------
 compute_contains_intervals(_,[],[],[],[],_):-!.
 compute_contains_intervals(_,[],[_|_],[],[],_):-!.
-compute_contains_intervals(_,[_|_],[],[],[],_):-!.
+compute_contains_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-!,
+    unk_or_inf_temporal_entities([A|R],AUI),
+    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
 
 %------------------------------------------------------------
 %participating phenomena are states/events (b)

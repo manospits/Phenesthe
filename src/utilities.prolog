@@ -209,13 +209,23 @@ last_ending_temporal_entities([A|R],LastEntities):-
         (
             LastEntitiesI=[AI|_],
             temporal_information(AI,_TSAI,TEAI,_),
-            gt(TEA,TEAI),
+            is_inf_unk(TEAI),
             LastEntities=[A]
+        )
+        ;
+        (
+            LastEntitiesI=[AI|AItail],
+            temporal_information(AI,_TSAI,TEAI,_),
+            \+is_inf_unk(TEAI),
+            unk_or_inf_temporal_entities(AItail,AItailUI),
+            gt(TEA,TEAI),
+            LastEntities=[A|AItailUI]
         )
         ;
         (
             LastEntitiesI=[AI|_],
             temporal_information(AI,_TSAI,TEAI,_),
+            \+is_inf_unk(TEAI),
             lt(TEA,TEAI),
             LastEntities=LastEntitiesI
         )
@@ -223,10 +233,21 @@ last_ending_temporal_entities([A|R],LastEntities):-
         (
             LastEntitiesI=[AI|_],
             temporal_information(AI,_TSAI,TEAI,_),
+            \+is_inf_unk(TEAI),
             TEA=TEAI,
             LastEntities=[A|LastEntitiesI]
         )
     ).
+
+unk_or_inf_temporal_entities([],[]).
+unk_or_inf_temporal_entities([A|R],[A|Tail]):-
+    temporal_information(A,_TSA,TEA,_),
+    is_inf_unk(TEA),
+    unk_or_inf_temporal_entities(R,Tail).
+unk_or_inf_temporal_entities([A|R],Tail):-
+    temporal_information(A,_TSA,TEA,_),
+    \+is_inf_unk(TEA),
+    unk_or_inf_temporal_entities(R,Tail).
 
 add_if_not_redundant(AP,[_,TE],Tcrit,RemainingAL,[AP|RemainingAL]):-
     gt(TE,Tcrit),

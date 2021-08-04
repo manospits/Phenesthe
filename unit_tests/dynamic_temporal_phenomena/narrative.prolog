@@ -16,5 +16,6 @@ assert_input_phenomena(10):-
     assert(event_instant(pickup(bob,tobacco),10)).
 assert_input_phenomena(15):-
     assert(event_instant(hunger(bob),13)),
-    assert(event_instant(ate(alice,food),14)).
+    assert(event_instant(ate(alice,food),14)),
+    assert(event_instant(drop(bob,pen),15)).
 

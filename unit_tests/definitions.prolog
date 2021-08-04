@@ -69,6 +69,9 @@ dynamic_phenomenon sad_then_happy(Person) :=
 dynamic_phenomenon happy_then_sad(Person) :=
     happy(Person) meets sad(Person).
 
+dynamic_phenomenon happy_then_sad2(Person) :=
+    happy_then_sad(Person) meets happy_then_sad(Person).
+
 dynamic_phenomenon drops_objects_when_hungry(Person) :=
     hungry(Person) contains drop(Person,_Object).
 
