@@ -81,21 +81,21 @@ mmax_member(RM,[A|R]):-
 
 %useful for treating instants and intervals the same way in
 %temporal relations computation
-get_end([_,E],E):-!.
-get_end(T,T):- \+(is_list(T)),!.
-get_start([A,_],A):-!.
-get_start(T,T):- \+(is_list(T)),!.
+temporal_information([TS,TE],TS,TE,[]).
+temporal_information(([TS,TE],BTSL),TS,TE,BTSL).
+temporal_information(T,T,T,[]):- \+is_list(T).
+
 
 %used in before computation
 get_same_ts_sublist(_,[],[],[]):-!.
 get_same_ts_sublist(B1,[B2|R],[B2|I],RI):-
-    get_start(B1,T),
-    get_start(B2,T),!,
+    temporal_information(B1,T,_,_),
+    temporal_information(B2,T,_,_),!,
     get_same_ts_sublist(B1,R,I,RI).
 
 get_same_ts_sublist(B1,[B2|R],[],[B2|R]):-
-    get_start(B1,T1),
-    get_start(B2,T2),
+    temporal_information(B1,T1,_,_),
+    temporal_information(B2,T2,_,_),
     T1\=T2.
 
 %merges ordered lists of nd intervals
@@ -145,14 +145,14 @@ min(A,B,B):-lt(B,A).
 %create the intervals for current B interval
 create_intervals(_,_,_,[],[],[],_):-!.
 create_intervals(Type,[B|BI],BALL,[(u,A)|AI],I,RemainingA,Tcrit):-
-    !,get_start(A,ATS),
-    get_start(B,BTS),
+    !,temporal_information(A,ATS,_,_),
+    temporal_information(B,BTS,_,_),
     min(ATS,BTS,TS),
     create_intervals(Type,BI,BALL,[A|AI],II,RemainingA,Tcrit),
     ord_merge([[TS,unk]],II,I).
 create_intervals(Type,[B|BI],BALL,[A|AI],I,RemainingA,Tcrit):-
     temporal_information(B,BTS,BTE,_V),
-    get_start(A,ATS),
+    temporal_information(A,ATS,_,_),
     min(ATS,BTS,TS),
     create_intervals(Type,BI,BALL,[A|AI],II,RemainingAL,Tcrit),
     (
@@ -239,15 +239,8 @@ last_ending_temporal_entities([A|R],LastEntities):-
         )
     ).
 
-unk_or_inf_temporal_entities([],[]).
-unk_or_inf_temporal_entities([A|R],[A|Tail]):-
-    temporal_information(A,_TSA,TEA,_),
-    is_inf_unk(TEA),
-    unk_or_inf_temporal_entities(R,Tail).
-unk_or_inf_temporal_entities([A|R],Tail):-
-    temporal_information(A,_TSA,TEA,_),
-    \+is_inf_unk(TEA),
-    unk_or_inf_temporal_entities(R,Tail).
+unk_or_inf_temporal_entities(L,Linfunk):-
+    include(temporal_entity_has_inf_unk,L,Linfunk).
 
 add_if_not_redundant(AP,[_,TE],Tcrit,RemainingAL,[AP|RemainingAL]):-
     gt(TE,Tcrit),
@@ -256,13 +249,12 @@ add_if_not_redundant(AP,[_,TE],Tcrit,RemainingAL,[AP|RemainingAL]):-
 add_if_not_redundant(_AP,[_,_TE],_Tcrit,RemainingAL,RemainingAL).
     %\+((gt(TE,Tcrit),get_end(AP,TAPE),leq(TAPE,Tcrit))).
 
-
-temporal_information([TS,TE],TS,TE,[]).
-temporal_information(([TS,TE],BTSL),TS,TE,BTSL).
-temporal_information(T,T,T,[]):- \+is_list(T).
-
 is_inf_unk(inf).
 is_inf_unk(unk).
+interval_has_unk([_,unk]).
+temporal_entity_has_inf_unk(A):-
+    temporal_information(A,_TSA,TEA,_),
+    is_inf_unk(TEA).
 
 lt(A,unk):-number(A),!.
 lt(unk,inf):-!.
@@ -279,11 +271,6 @@ leq(A,B):-lt(A,B).
 
 geq(A,B):-A=B,!.
 geq(A,B):-gt(A,B).
-
-
-validity(t,t,t):-!.
-validity(u,_,u):-!.
-validity(_,u,u):-!.
 
 
 instant_complement(StartTime,EndTime,Formula,T):-
@@ -339,9 +326,15 @@ my_setval(X,C):-
 my_getval(X,C):-
     val(X,C).
 
-clean_from_unk([],[]).
-clean_from_unk([[_A,unk]|Tail],Cleaned):-
-    !,clean_from_unk(Tail,Cleaned).
-clean_from_unk([[A,B]|Tail],[[A,B]|Cleaned]):-
-    clean_from_unk(Tail,Cleaned).
+clean_from_unk(L,Lcleaned):-
+    exclude(interval_has_unk,L,Lcleaned).
+
+remaining([],_,[]).
+remaining([[TS,TE]|IL],T,[[TS,TE]|RIL]):-
+    TE > T,
+    remaining(IL,T,RIL).
+remaining([[_TS,TE]|IL],T,RIL):-
+    TE =< T,
+    remaining(IL,T,RIL).
+
 

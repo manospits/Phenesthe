@@ -14,6 +14,7 @@
           retained_tset_formula_intervals/5,
           retained_relation_formula_intervals/5,
           dynamic_phenomenon_intervals_internal/2,
+          dynamic_phenomenon_intervals/2,
           level/2.
 
 :-multifile input_phenomenon/2.
@@ -108,7 +109,8 @@ preprocess_phenomenon_definition(X,user):-
 recognition_query(WindowSize,Step,Tq):-
     Tcrit is Tq+Step-WindowSize,
     Tqmw is Tq-WindowSize,
-    discard_redundant(Tqmw),
+    Tqmws is Tq-WindowSize-Step,
+    discard_redundant(Tqmw,Tqmws),
     Tqmw1 is Tqmw+1,
     create_window_instants(Tqmw1,Tq,WindowInstants),
     my_setval(tcrit,Tcrit),
@@ -116,8 +118,6 @@ recognition_query(WindowSize,Step,Tq):-
     my_setval(tq,Tq),
     my_setval(current_window_instants,WindowInstants),
     process_level(1,WindowSize,Step,Tq).
-    %export results
-    %discard_redundant.
 
 process_level(Level,_W,_S,_Tq):-
     \+level(_,Level),!.
@@ -131,61 +131,36 @@ process_level(Level, WindowSize, Step, Tq):-
     process_level(NextLevel, WindowSize, Step, Tq).
 
 
-discard_redundant(TsCurrentW):-
+discard_redundant(Tqmw,Tqmws):-
     %retract all recognised
-    findall(_,(
-        phenomenon_type(X,event,user),
-        retractall(event_instants(X,_))
-        ),_),
-    findall(_,(
-        phenomenon_type(X,state,user),
-        retractall(state_intervals(X,_))
-        ),_),
-    findall(_,(
-        phenomenon_type(X,dynamic_phenomenon,user),
-        retractall(dynamic_phenomenon_intervals_internal(X,_))
-        ),_),
+    forall(phenomenon_type(X,event,user),retractall(event_instants(X,_))),
+    forall(phenomenon_type(X,state,user),retractall(state_intervals(X,_))),
+    forall(phenomenon_type(X,dynamic_phenomenon,user),retractall(dynamic_phenomenon_intervals_internal(X,_))),
     %retract input entities
-    findall(_,(
-        phenomenon_type(X,event,input),
-        event_instant(X,T),
-        T=<TsCurrentW,
-        retract((event_instant(X,T)))),
-        _),
+    forall((phenomenon_type(X,event,input),
+            event_instant(X,T),
+            T=<Tqmw),
+           retract(event_instant(X,T))),
     %retract input states
-    findall(_,(
+    findall(state_intervals(X,ILR),(
         phenomenon_type(X,state,input),
         state_intervals(X,IL),
-        remaining(IL,TsCurrentW,ILR),
-        retract((state_intervals(X,IL))),
-        assert((state_intervals(X,ILR)))
-    ),_),
+        remaining(IL,Tqmw,ILR)
+    ),SIs),
+    retractall(state_intervals(_,_)),
+    forall(member(state_intervals(X,ILR),SIs),assert(state_intervals(X,ILR))),
     %retract dynamic phenomena intervals
-    findall(_,(
-        retained_starting_formula(A,B,C,T),
-        T\=TsCurrentW,
-        retract(retained_starting_formula(A,B,C,T))
-    ),_),
-    findall(_,(
-        retained_tset_formula_intervals(A,B,C,T,D),
-        T\=TsCurrentW,
-        retract(retained_tset_formula_intervals(A,B,C,T,D))
-    ),_),
-findall(_,(
-        retained_relation_formula_intervals(A,B,C,T,D),
-        T\=TsCurrentW,
-        retract(retained_relation_formula_intervals(A,B,C,T,D))
-    ),_)
-    .
-
-remaining([],_,[]).
-remaining([[TS,TE]|IL],T,[[TS,TE]|RIL]):-
-    TE > T,
-    remaining(IL,T,RIL).
-remaining([[_TS,TE]|IL],T,RIL):-
-    TE =< T,
-    remaining(IL,T,RIL).
-
+    %findall(dynamic_phenomenon_intervals(X,ILR),(
+        %phenomenon_type(X,dynamic_phenomenon,input),
+        %dynamic_phenomenon_intervals(X,IL),
+        %remaining(IL,Tqmw,ILR)
+    %),DIs),
+    %retractall(dynamic_phenomenon_intervals(_,_)),
+    %forall(member(dynamic_phenomenon_intervals(X,ILR),DIs),assert(dynamic_phenomenon_intervals(X,ILR))),
+    %retract old retained information
+    retractall(retained_starting_formula(_,_,_,Tqmws)),
+    retractall(retained_tset_formula_intervals(_,_,_,Tqmws,_)),
+    retractall(retained_relation_formula_intervals(_,_,_,Tqmws,_)).
 
 
 process_phenomenon(Phenomenon):-
@@ -237,5 +212,6 @@ process_dynamic_phenomenon(Phenomenon):-
     ,_).
 
 dynamic_phenomenon_intervals(Phenomenon,IL):-
+    phenomenon_type(Phenomenon,dynamic_phenomenon,user),
     dynamic_phenomenon_intervals_internal(Phenomenon,IIL),
     clean_from_unk(IIL,IL),IL\=[].

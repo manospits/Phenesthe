@@ -1,4 +1,4 @@
-:-['../phenesthe.prolog'].
+:-['../../phenesthe.prolog'].
 :-['definitions.prolog'].
 :-['narrative.prolog'].
 :-preprocess_phenomena_definitions.

@@ -702,7 +702,6 @@ compute_contains_intervals2(nd, [A|RL], B, NRL, CORS, IL, NonRedundantB, Tcrit):
 compute_contains_intervals2(nd,[A|RL],B, [A|NRL], CORS, IL, NonRedundantB, Tcrit):-
     temporal_information(A,TSA,TEA,_V1),
     temporal_information(B,TSB,_TEB,_V2),
-    get_start(B,TSB),
     TSBM1 is TSB-1,
     leq(TSA,TSBM1),
     gt(TEA,TSB),!,

@@ -14,14 +14,14 @@ Given an input stream of input phenomena '_Phenesthe_' will produce the instants
 
 ## Installation & Getting Started
 Running '_Phenesthe'_ requires a prolog installation. Specifically it has been tested under [SWI-Prolog](www.swi-prolog.org) 7.6.4.
-#### Running '_Phenesthe_' on the included sample
-The samples folder includes an example usage of '_Phenesthe'_. ```definitions.prolog``` contains definitions of temporal phenomena, the ```narrative.prolog``` contains the input phenomena and 'run.prolog' loads _Phenesthe_ and preprocesses the phenomena definitions.
+#### Running '_Phenesthe_' on the included 'Alice & Bob' sample
+The ```samples/alice_and_bob/``` folder includes an example usage of '_Phenesthe'_. The ```definitions.prolog``` contains definitions of temporal phenomena, the ```narrative.prolog``` contains the input phenomena and 'run.prolog' loads '_Phenesthe_' and preprocesses the phenomena definitions.
 
 
-**Step 0 (optional):** Have a look at the phenomena definitions in ```samples/definitions.prolog``` and the narrative at ```samples/narrative.prolog```.
+**Step 0 (optional):** Have a look at the phenomena definitions in ```definitions.prolog``` and the narrative at ```narrative.prolog``` in the ```samples/alice_and_bob``` folder.
 **Step 1 (loading):** Load ```run.prolog``` in swipl. Calling ```query(5)``` loads the input phenomena that arrived until '5' and performs a recognition query given that time is '5'.
 ```sh
-cd samples
+cd samples/alice_and_bob
 swipl -l run.prolog
 ?- query(5). % performs recognition of phenomena at t=5
 ```
