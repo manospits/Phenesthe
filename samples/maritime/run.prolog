@@ -1,15 +1,21 @@
 :-['../../phenesthe.prolog'].
 :-['definitions.prolog'].
 :-preprocess_phenomena_definitions.
-
-
+%
+% BREST
+% one week 
+% queries_on_fstream('BREST_phenesthe_input.csv',1443650401,1444255201,86400,86400).
 
 queries_on_fstream(File,Start,End,Step,Window):-
     open(File,read,Fd,[alias(input)]),
     FirstQueryTime is Start+Step,
     fstream_perform_query(Fd,[],End,Step,Window,FirstQueryTime).
 
+fstream_perform_query(_Fd,_Retained,End,_Step,_Window,QueryTime):-
+    QueryTime > End.
+
 fstream_perform_query(Fd,Retained,End,Step,Window,QueryTime):-
+    QueryTime =< End,
     writeln('===================================================='),
     write('            '),get_time(Time),rfc1123_timestamp(Time,FTime),
     writeln(FTime),
@@ -29,17 +35,8 @@ fstream_perform_query(Fd,Retained,End,Step,Window,QueryTime):-
     write('State instances/intervals: '), write(Sa), write('/'), writeln(Si),
     write('Dynamic Phe. instances/intervals: '), write(Da), write('/'), writeln(Di),
     writeln("\n\n"),
-    (
-        (
-            QueryTime =< End,
-            NewQueryTime is QueryTime+Step,
-            fstream_perform_query(Fd,RetainedNew,End,Step,Window,NewQueryTime)
-        )
-    ;
-        (
-            QueryTime > End
-        )
-    ).
+    NewQueryTime is QueryTime+Step,
+    fstream_perform_query(Fd,RetainedNew,End,Step,Window,NewQueryTime).
 
 assert_from_stream(Fd,Retained,RetainedNew,End,QueryTime):-
     findall(_,(member(X,Retained),assert(X)),_),

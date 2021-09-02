@@ -189,11 +189,14 @@ get_retained_tset_formula(OP,PheVars,FormulaId,Tqmw,RetainedIL):-
 get_retained_tset_formula(OP,PheVars,FormulaId,Tqmw,[]):-
     \+(retained_tset_formula_intervals(OP,PheVars,FormulaId,Tqmw,_)).
 
+retain_tset_formula(IL,_OP,_PheVars,_FormulaId,Tcrit):-
+    retain_tset_formula_intervals(IL, [], Tcrit),!.
 retain_tset_formula(IL,OP,PheVars,FormulaId,Tcrit):-
     retain_tset_formula_intervals(IL, ILR, Tcrit),
-    ((ILR\=[],
-      assert(retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR)));
-      ILR=[]).
+    retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR),!.
+retain_tset_formula(IL,OP,PheVars,FormulaId,Tcrit):-
+    retain_tset_formula_intervals(IL, ILR, Tcrit),
+    assert(retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR)).
 
 retain_tset_formula_intervals([], [], _).
 retain_tset_formula_intervals([[Ts,Te]|ILTail], ILR, Tcrit):-
@@ -240,6 +243,10 @@ retain_starting_formula([],_,_,_).
 retain_starting_formula([[Ts,Te]|R], StartingFormula, FormulaId, Tcrit):-
     \+((Te > Tcrit,Ts =< Tcrit)),
     retain_starting_formula(R,StartingFormula,FormulaId, Tcrit).
+retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
+    Te > Tcrit,
+    Ts =< Tcrit,
+    retained_starting_formula((StartingFormula),Ts,FormulaId,Tcrit),!.
 retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
     Te > Tcrit,
     Ts =< Tcrit,
@@ -490,6 +497,9 @@ relation_intervals_formula(Relation, FT, LFormula, RFormula, LIL, RIL, IL, PheVa
 
 retain_relation_formula_intervals(_,_,_,_,[]):-!.
 retain_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP):-
-    AP\=[],
+    %writeln((before-PheVars)),
+    retained_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP),!.
+    %writeln((after-PheVars)).
+retain_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP):-
     assert(retained_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP)).
 

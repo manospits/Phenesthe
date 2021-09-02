@@ -99,45 +99,82 @@ get_same_ts_sublist(B1,[B2|R],[],[B2|R]):-
     T1\=T2.
 
 %merges ordered lists of nd intervals
-ord_merge([],[],[]):-!.
-ord_merge(I,[],I):-I\=[],!.
-ord_merge([],I,I):-I\=[],!.
+ord_merge([], Merge, Merge).
+ord_merge([H1|T1], L2, Merge):-
+    ord_merge2(L2, H1, T1, Merge).
 
-ord_merge([A|AR],[B|BR],[A|ABR]):-
-    temporal_information(A,TSA,_TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    lt(TSA,TSB),!,
-    ord_merge(AR,[B|BR],ABR).
-ord_merge([A|AR],[B|BR],[B|ABR]):-
-    temporal_information(A,TSA,_TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    gt(TSA,TSB),!,
-    ord_merge([A|AR],BR,ABR).
-ord_merge([A|AR],[B|BR],[A|ABR]):-
-    temporal_information(A,TSA,TEA,_),
-    temporal_information(B,TSB,TEB,_),
-    TSA=TSB,
-    lt(TEA,TEB),!,
-    ord_merge(AR,[B|BR],ABR).
-ord_merge([A|AR],[B|BR],[B|ABR]):-
-    temporal_information(A,TSA,TEA,_),
-    temporal_information(B,TSB,TEB,_),
-    TSA=TSB,
-    gt(TEA,TEB),!,
-    ord_merge([A|AR],BR,ABR).
-ord_merge([A|AR],[B|BR],[B|ABR]):-
-    temporal_information(A,TSA,TEA,[]),
-    temporal_information(B,TSB,TEB,[]),
-    TSA=TSB,
-    TEA=TEB,!,
-    ord_merge(AR,BR,ABR).
-ord_merge([A|AR],[B|BR],[([TSA,TEA],V3)|ABR]):-
-    temporal_information(A,TSA,TEA,V1),
-    temporal_information(B,TSB,TEB,V2),
-    append(V1,V2,V3),
-    TSA=TSB,
-    TEA=TEB,!,
-    ord_merge(AR,BR,ABR).
+ord_merge2([], H1, T1, [H1|T1]).
+ord_merge2([H2|T2], H1, T1, Merge):-
+    interval_compare(Order, H1, H2),
+    ord_merge3(Order, H1, T1, H2, T2, Merge).
+
+ord_merge3(<, H1, T1, H2, T2, [H1|Merge]) :-
+    ord_merge2(T1, H2, T2, Merge).
+ord_merge3(=, H1, T1, _H2, T2, [H1|Merge]) :-
+    ord_merge(T1, T2, Merge).
+ord_merge3(>, H1, T1, H2, T2, [H2|Merge]) :-
+    ord_merge2(T2, H1, T1, Merge).
+
+
+interval_compare(<,I1,I2):-
+    temporal_information(I1,TS1,_TE1,_),
+    temporal_information(I2,TS2,_TE2,_),
+    lt(TS1,TS2).
+interval_compare(<,I1,I2):-
+    temporal_information(I1,TS,TE1,_),
+    temporal_information(I2,TS,TE2,_),
+    lt(TE1,TE2).
+interval_compare(>,I1,I2):-
+    temporal_information(I1,TS1,_TE1,_),
+    temporal_information(I2,TS2,_TE2,_),
+    gt(TS1,TS2).
+interval_compare(>,I1,I2):-
+    temporal_information(I1,TS,TE1,_),
+    temporal_information(I2,TS,TE2,_),
+    gt(TE1,TE2).
+interval_compare(=,I1,I2):-
+    temporal_information(I1,TS,TE,_),
+    temporal_information(I2,TS,TE,_).
+
+%ord_merge([],[],[]):-!.
+%ord_merge(I,[],I):-I\=[],!.
+%ord_merge([],I,I):-I\=[],!.
+
+%ord_merge([A|AR],[B|BR],[A|ABR]):-
+    %temporal_information(A,TSA,_TEA,_),
+    %temporal_information(B,TSB,_TEB,_),
+    %lt(TSA,TSB),!,
+    %ord_merge(AR,[B|BR],ABR).
+%ord_merge([A|AR],[B|BR],[B|ABR]):-
+    %temporal_information(A,TSA,_TEA,_),
+    %temporal_information(B,TSB,_TEB,_),
+    %gt(TSA,TSB),!,
+    %ord_merge([A|AR],BR,ABR).
+%ord_merge([A|AR],[B|BR],[A|ABR]):-
+    %temporal_information(A,TSA,TEA,_),
+    %temporal_information(B,TSB,TEB,_),
+    %TSA=TSB,
+    %lt(TEA,TEB),!,
+    %ord_merge(AR,[B|BR],ABR).
+%ord_merge([A|AR],[B|BR],[B|ABR]):-
+    %temporal_information(A,TSA,TEA,_),
+    %temporal_information(B,TSB,TEB,_),
+    %TSA=TSB,
+    %gt(TEA,TEB),!,
+    %ord_merge([A|AR],BR,ABR).
+%ord_merge([A|AR],[B|BR],[B|ABR]):-
+    %temporal_information(A,TSA,TEA,[]),
+    %temporal_information(B,TSB,TEB,[]),
+    %TSA=TSB,
+    %TEA=TEB,!,
+    %ord_merge(AR,BR,ABR).
+%ord_merge([A|AR],[B|BR],[([TSA,TEA],V3)|ABR]):-
+    %temporal_information(A,TSA,TEA,V1),
+    %temporal_information(B,TSB,TEB,V2),
+    %append(V1,V2,V3),
+    %TSA=TSB,
+    %TEA=TEB,!,
+    %ord_merge(AR,BR,ABR).
 
 min(A,B,A):-leq(A,B),!.
 min(A,B,B):-lt(B,A).
@@ -194,6 +231,12 @@ splice_interval_sets([],[A|B],[A|B]).
 splice_interval_sets([[ATS,T]|_],[[T,BTE]|IL],[[ATS,BTE]|IL]).
 splice_interval_sets([[ATS,ATE]|_],[[BTS,BTE]|IL],[[ATS,ATE],[BTS,BTE]|IL]):-ATE\=BTS.
 
+
+%returns the last ending interval(s) with an instant 
+%not equal to inf or unk, plus all the intervals that end with an
+%inf or unk
+%e.g., for an input [[1,2],[1,3],[1,inf],[2,3]]
+%it will return [[1,3],[1,inf],[2,3]]
 last_ending_temporal_entities([],[]).
 last_ending_temporal_entities([A|R],LastEntities):-
     temporal_information(A,_TSA,TEA,_),
