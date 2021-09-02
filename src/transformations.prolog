@@ -497,9 +497,7 @@ relation_intervals_formula(Relation, FT, LFormula, RFormula, LIL, RIL, IL, PheVa
 
 retain_relation_formula_intervals(_,_,_,_,[]):-!.
 retain_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP):-
-    %writeln((before-PheVars)),
     retained_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP),!.
-    %writeln((after-PheVars)).
 retain_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP):-
     assert(retained_relation_formula_intervals(Relation,PheVars,FormulaId,Tcrit,AP)).
 
