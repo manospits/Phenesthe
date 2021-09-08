@@ -5,7 +5,7 @@
 - states (durative)
 - dynamic temporal phenomena (durative)
 
-Given an input stream of input phenomena '_Phenesthe_' will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and Shan Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. [arXiv:2108.13365](https://arxiv.org/abs/2108.13365)"
+Given an input stream of input phenomena '_Phenesthe_' will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and Shan Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. [arXiv:2108.13365](https://arxiv.org/abs/2108.13365)_"
 ## Features
 
 - A user friendly language that allows the definition of temporal phenomena
