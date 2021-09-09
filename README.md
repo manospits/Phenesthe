@@ -19,6 +19,7 @@ The ```samples/alice_and_bob/``` folder includes an example usage of '_Phenesthe
 
 
 **Step 0 (optional):** Have a look at the phenomena definitions in ```definitions.prolog``` and the narrative at ```narrative.prolog``` in the ```samples/alice_and_bob``` folder.
+
 **Step 1 (loading):** Load ```run.prolog``` in swipl. Calling ```query(5)``` loads the input phenomena that arrived until '5' and performs a recognition query given that time is '5'.
 ```sh
 cd samples/alice_and_bob
