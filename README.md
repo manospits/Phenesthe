@@ -9,7 +9,7 @@ Given an input stream of input phenomena '_Phenesthe_' will produce the instants
 ## Features
 
 - A user friendly language that allows the definition of temporal phenomena
-- Formal description of the semantics and execution semantics (to be made public soon)
+- Formal description of the semantics and execution semantics
 - An engine that allows the recognition of the instants and intervals at which the user defined phenomena are true/hold
 
 ## Installation & Getting Started
