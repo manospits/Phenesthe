@@ -12,7 +12,7 @@
           state_intervals/2,
           retained_starting_formula/4,
           retained_tset_formula_intervals/5,
-          retained_relation_formula_intervals/5,
+          retained_relation_formula_temp_info/5,
           dynamic_phenomenon_intervals_internal/2,
           dynamic_phenomenon_intervals/2,
           level/2.

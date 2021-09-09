@@ -39,7 +39,7 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     log_results(LFd,QueryTime,ExecutionTime,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
     print_results(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
     writeln("\n\n"),
-    NewQueryTime is QueryTime+Step,
+    NewQueryTime is QueryTime+Step,!,
     fstream_perform_query((IFd,LFd,RFd),RetainedNew,End,Step,Window,NewQueryTime).
 
 assert_from_stream(Fd,Retained,RetainedNew,End,QueryTime):-

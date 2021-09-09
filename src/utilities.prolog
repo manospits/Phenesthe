@@ -136,46 +136,6 @@ interval_compare(=,I1,I2):-
     temporal_information(I1,TS,TE,_),
     temporal_information(I2,TS,TE,_).
 
-%ord_merge([],[],[]):-!.
-%ord_merge(I,[],I):-I\=[],!.
-%ord_merge([],I,I):-I\=[],!.
-
-%ord_merge([A|AR],[B|BR],[A|ABR]):-
-    %temporal_information(A,TSA,_TEA,_),
-    %temporal_information(B,TSB,_TEB,_),
-    %lt(TSA,TSB),!,
-    %ord_merge(AR,[B|BR],ABR).
-%ord_merge([A|AR],[B|BR],[B|ABR]):-
-    %temporal_information(A,TSA,_TEA,_),
-    %temporal_information(B,TSB,_TEB,_),
-    %gt(TSA,TSB),!,
-    %ord_merge([A|AR],BR,ABR).
-%ord_merge([A|AR],[B|BR],[A|ABR]):-
-    %temporal_information(A,TSA,TEA,_),
-    %temporal_information(B,TSB,TEB,_),
-    %TSA=TSB,
-    %lt(TEA,TEB),!,
-    %ord_merge(AR,[B|BR],ABR).
-%ord_merge([A|AR],[B|BR],[B|ABR]):-
-    %temporal_information(A,TSA,TEA,_),
-    %temporal_information(B,TSB,TEB,_),
-    %TSA=TSB,
-    %gt(TEA,TEB),!,
-    %ord_merge([A|AR],BR,ABR).
-%ord_merge([A|AR],[B|BR],[B|ABR]):-
-    %temporal_information(A,TSA,TEA,[]),
-    %temporal_information(B,TSB,TEB,[]),
-    %TSA=TSB,
-    %TEA=TEB,!,
-    %ord_merge(AR,BR,ABR).
-%ord_merge([A|AR],[B|BR],[([TSA,TEA],V3)|ABR]):-
-    %temporal_information(A,TSA,TEA,V1),
-    %temporal_information(B,TSB,TEB,V2),
-    %append(V1,V2,V3),
-    %TSA=TSB,
-    %TEA=TEB,!,
-    %ord_merge(AR,BR,ABR).
-
 min(A,B,A):-leq(A,B),!.
 min(A,B,B):-lt(B,A).
 
@@ -207,10 +167,19 @@ create_intervals(Type,[B|BI],BALL,[A|AI],I,RemainingA,Tcrit):-
 create_intervals(Type,[],BALL,[_|AI],I,RemainingA,Tcrit):-
     create_intervals(Type,BALL,BALL,AI,I,RemainingA,Tcrit).
 
-formulae_ints_type(d,d,d).
-formulae_ints_type(nd,d,nd).
-formulae_ints_type(d,nd,nd).
-formulae_ints_type(nd,nd,nd).
+formula_is(instant,d).
+formula_is(dinterval,d).
+formula_is(ndinterval,nd).
+
+formulae_are(d,d,d).
+formulae_are(nd,d,nd).
+formulae_are(d,nd,nd).
+formulae_are(nd,nd,nd).
+
+formulae_ints_type(X,Y,Type):-
+    formula_is(X,XI),
+    formula_is(Y,YI),
+    formulae_are(XI,YI,Type).
 
 setof_empty(V,F,L):-
     setof(V,F,L) *-> true; L = [].
@@ -337,10 +306,21 @@ assert_if_not_exists(X):-
 assert_if_not_exists(X):-
     X.
 
+merge_temporal_information_lists(instant, InputList, OutputList):-
+    merge_instant_lists(InputList,OutputList).
+merge_temporal_information_lists(dinterval, InputList, OutputList):-
+    merge_disjoint_interval_lists(InputList, OutputList).
+merge_temporal_information_lists(ndinterval, InputList, OutputList):-
+    merge_non_disjoint_interval_lists(InputList, OutputList).
+
+
 merge_instant_lists([],[]).
 merge_instant_lists([A|Tail],Merged):-
+    is_list(A),
     merge_instant_lists(Tail,TailMerged),
     ord_union(A,TailMerged,Merged).
+merge_instant_lists([A|Tail],[A|Tail]):-
+    \+is_list(A).
 
 merge_disjoint_interval_lists([],[]).
 merge_disjoint_interval_lists([A|Tail],Union):-
@@ -351,10 +331,7 @@ merge_disjoint_interval_lists([A|Tail],Union):-
 merge_non_disjoint_interval_lists([],[]).
 merge_non_disjoint_interval_lists([A|Tail],Merged):-
     merge_non_disjoint_interval_lists(Tail,TailMerged),
-    is_list(A),
     ord_merge(A,TailMerged,Merged).
-merge_non_disjoint_interval_lists([A|Tail],[A|Tail]):-
-    \+is_list(A).
 
 ground_check(A,yes):-
     ground(A),!.
@@ -379,5 +356,46 @@ remaining([[TS,TE]|IL],T,[[TS,TE]|RIL]):-
 remaining([[_TS,TE]|IL],T,RIL):-
     TE =< T,
     remaining(IL,T,RIL).
+
+%old_code
+%ord_merge([],[],[]):-!.
+%ord_merge(I,[],I):-I\=[],!.
+%ord_merge([],I,I):-I\=[],!.
+
+%ord_merge([A|AR],[B|BR],[A|ABR]):-
+    %temporal_information(A,TSA,_TEA,_),
+    %temporal_information(B,TSB,_TEB,_),
+    %lt(TSA,TSB),!,
+    %ord_merge(AR,[B|BR],ABR).
+%ord_merge([A|AR],[B|BR],[B|ABR]):-
+    %temporal_information(A,TSA,_TEA,_),
+    %temporal_information(B,TSB,_TEB,_),
+    %gt(TSA,TSB),!,
+    %ord_merge([A|AR],BR,ABR).
+%ord_merge([A|AR],[B|BR],[A|ABR]):-
+    %temporal_information(A,TSA,TEA,_),
+    %temporal_information(B,TSB,TEB,_),
+    %TSA=TSB,
+    %lt(TEA,TEB),!,
+    %ord_merge(AR,[B|BR],ABR).
+%ord_merge([A|AR],[B|BR],[B|ABR]):-
+    %temporal_information(A,TSA,TEA,_),
+    %temporal_information(B,TSB,TEB,_),
+    %TSA=TSB,
+    %gt(TEA,TEB),!,
+    %ord_merge([A|AR],BR,ABR).
+%ord_merge([A|AR],[B|BR],[B|ABR]):-
+    %temporal_information(A,TSA,TEA,[]),
+    %temporal_information(B,TSB,TEB,[]),
+    %TSA=TSB,
+    %TEA=TEB,!,
+    %ord_merge(AR,BR,ABR).
+%ord_merge([A|AR],[B|BR],[([TSA,TEA],V3)|ABR]):-
+    %temporal_information(A,TSA,TEA,V1),
+    %temporal_information(B,TSB,TEB,V2),
+    %append(V1,V2,V3),
+    %TSA=TSB,
+    %TEA=TEB,!,
+    %ord_merge(AR,BR,ABR).
 
 
