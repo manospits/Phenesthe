@@ -302,7 +302,7 @@ create_window_instants(StartTime,EndTime,[StartTime|R]):-
 
 
 assert_if_not_exists(X):-
-    \+X,assert(X).
+    \+X,assertz(X).
 assert_if_not_exists(X):-
     X.
 
@@ -342,7 +342,7 @@ ground_check(A,no):-
 my_setval(X,C):-
     ((val(X,_),!,retract(val(X,_)));
      (\+val(X,_))),
-    assert(val(X,C)).
+    assertz(val(X,C)).
 my_getval(X,C):-
     val(X,C).
 

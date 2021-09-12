@@ -27,9 +27,9 @@
 
 %Definitions loading/pre-processing/storing 
 term_expansion(input_phenomenon(Phenomenon,Type),input_phenomenon(Phenomenon,Type)).
-term_expansion(:=(event_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assert(user_phenomenon(X,event)).
-term_expansion(:=(state_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assert(user_phenomenon(X,state)).
-term_expansion(:=(dynamic_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assert(user_phenomenon(X,dynamic_phenomenon)).
+term_expansion(:=(event_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,event)).
+term_expansion(:=(state_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,state)).
+term_expansion(:=(dynamic_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,dynamic_phenomenon)).
 
 % Predicate type handling
 % event state dynamic phenomenon predicates
@@ -46,7 +46,7 @@ preprocess_phenomena_definitions:-
         phenomenon_type(X,_,_),
         phenomenon_conditions(X,Conditions),
         find_dependencies(Conditions,D),
-        assert(dependencies(X,D))
+        assertz(dependencies(X,D))
         )
     ,_),
     my_setval(formula_id,0),
@@ -54,7 +54,7 @@ preprocess_phenomena_definitions:-
         phenomenon_type(X,_,PType),
         preprocess_phenomenon_definition(X,PType),
         compute_topological_place(X,P),
-        assert(level(X,P))
+        assertz(level(X,P))
     ),_).
 
 dependencies(X,[]):-
@@ -100,7 +100,7 @@ compute_topological_place(X,0):-
 preprocess_phenomenon_definition(_,input).
 preprocess_phenomenon_definition(X,user):-
     transform_formula(X,P,TI),
-    assert(phenomenon_transformed_conditions(X,P,TI)).
+    assertz(phenomenon_transformed_conditions(X,P,TI)).
 
 
 %%%
@@ -148,15 +148,15 @@ discard_redundant(Tqmw,Tqmws):-
         remaining(IL,Tqmw,ILR)
     ),SIs),
     retractall(state_intervals(_,_)),
-    forall(member(state_intervals(X,ILR),SIs),assert(state_intervals(X,ILR))),
-    %retract dynamic phenomena intervals
+    forall(member(state_intervals(X,ILR),SIs),assertz(state_intervals(X,ILR))),
+    %retract dynamic phenomena intervals TODO
     %findall(dynamic_phenomenon_intervals(X,ILR),(
         %phenomenon_type(X,dynamic_phenomenon,input),
         %dynamic_phenomenon_intervals(X,IL),
         %remaining(IL,Tqmw,ILR)
     %),DIs),
     %retractall(dynamic_phenomenon_intervals(_,_)),
-    %forall(member(dynamic_phenomenon_intervals(X,ILR),DIs),assert(dynamic_phenomenon_intervals(X,ILR))),
+    %forall(member(dynamic_phenomenon_intervals(X,ILR),DIs),assertz(dynamic_phenomenon_intervals(X,ILR))),
     %retract old retained information
     retractall(retained_starting_formula(_,_,_,Tqmws)),
     retractall(retained_tset_formula_intervals(_,_,_,Tqmws,_)),
@@ -196,7 +196,7 @@ process_state(Phenomenon):-
         (
         ProcessedFormula,
         IL\=[],
-        assert(state_intervals(Phenomenon,IL))
+        assertz(state_intervals(Phenomenon,IL))
         )
     ,_).
 
@@ -207,7 +207,7 @@ process_dynamic_phenomenon(Phenomenon):-
         (
         ProcessedFormula,
         IL\=[],
-        assert(dynamic_phenomenon_intervals_internal(Phenomenon,IL))
+        assertz(dynamic_phenomenon_intervals_internal(Phenomenon,IL))
         )
     ,_).
 

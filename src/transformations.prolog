@@ -39,16 +39,14 @@ transform_formula2(dynamic_phenomenon,Formula,Variables,TransformedFormula,Inter
 %%
 %% Takes a formula of Phi^. and transforms it accordingly for
 %% prolog
-transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
-    Formula=..[aand,L,R],!,
+transform_instant_formula(aand(L,R), PheVars, ProcessedFormula, T):-!,
     transform_instant_formula(L, PheVars, LAt,  T),
     ProcessedFormula=(
         LAt,R
     ).
 
 % conjunction
-transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
-    Formula=..[and,L,R],!,
+transform_instant_formula(and(L,R), PheVars, ProcessedFormula, T):-!,
     term_variables([PheVars,L],LPheVars),
     term_variables([PheVars,R],RPheVars),
     transform_instant_formula(L, RPheVars, LAt, T),
@@ -56,8 +54,7 @@ transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
     ProcessedFormula=( (LAt,RAt); (RAt,LAt )).
 
 % disjunction
-transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
-    Formula=..[or,L,R],!,
+transform_instant_formula(or(L,R), PheVars, ProcessedFormula, T):-!,
     term_variables([PheVars,L],LPheVars),
     term_variables([PheVars,R],RPheVars),
     transform_instant_formula(L, RPheVars, LAt, T),
@@ -66,8 +63,7 @@ transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
 
 %returns the instants in the window where the negated formula
 %does not hold
-transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
-    Formula=..[tnot,R],!,
+transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
     transform_instant_formula(R, PheVars, RAt, Ti),
     term_variables(RAt,RAtVars),
     variable_list_diff(RAtVars,[Ti|PheVars],RAtVarsUnrelated),
@@ -89,8 +85,7 @@ transform_instant_formula(Formula, _PheVars, ProcessedFormula,  T):-
     ProcessedFormula=(event_instants(Formula,InstantList),member(T,InstantList)).
 
 % start operator
-transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
-    Formula=start(DFormula),!,
+transform_instant_formula(start(DFormula), PheVars, ProcessedFormula, T):-!,
     transform_dinterval_formula(DFormula, PheVars, DPFormula, PIL),
     term_variables(DPFormula,PFVars),
     variable_list_diff(PFVars, [PIL|PheVars], PFVarsUnrelated),
@@ -101,8 +96,7 @@ transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
     ).
 
 % end operator
-transform_instant_formula(Formula, PheVars, ProcessedFormula, T):-
-    Formula=end(DFormula),!,
+transform_instant_formula(end(DFormula), PheVars, ProcessedFormula, T):-!,
     transform_dinterval_formula(DFormula, PheVars, DPFormula, PIL),
     term_variables(DPFormula,PFVars),
     variable_list_diff(PFVars, [PIL|PheVars], PFVarsUnrelated),
@@ -126,8 +120,7 @@ transform_instant_formula(Formula, _PheVars, Formula, _):-
 %%
 %% Takes a formula of Phi^- and transforms it accordingly for
 %% prolog
-transform_dinterval_formula(Formula,PheVars, ProcessedFormula, IL):-
-    Formula=..[~>,L,R],!,
+transform_dinterval_formula(~>(L,R),PheVars, ProcessedFormula, IL):-!,
     term_variables([L,PheVars],LPheVars),
     term_variables([R,PheVars],RPheVars),
     transform_instant_formula(L, RPheVars, Lt, LTs),
@@ -219,18 +212,6 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
     FormulaIdp1 is FormulaId+1,my_setval(formula_id,FormulaIdp1).
 
 
-retain_starting_formula([],_,_,_).
-retain_starting_formula([[Ts,Te]|R], StartingFormula, FormulaId, Tcrit):-
-    \+((Te > Tcrit,Ts =< Tcrit)),
-    retain_starting_formula(R,StartingFormula,FormulaId, Tcrit).
-retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
-    Te > Tcrit,
-    Ts =< Tcrit,
-    retained_starting_formula((StartingFormula),Ts,FormulaId,Tcrit),!.
-retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
-    Te > Tcrit,
-    Ts =< Tcrit,
-    assert(retained_starting_formula((StartingFormula),Ts,FormulaId,Tcrit)).
 %--------------------------------------------------------------
 
 
@@ -390,6 +371,19 @@ relation_intervals_formula(Relation, FT, LType, RType, LFormula, RFormula, LIL, 
 
 %Retained information access
 %--------------------------- Phi^- -------------------------------
+retain_starting_formula([],_,_,_).
+retain_starting_formula([[Ts,Te]|R], StartingFormula, FormulaId, Tcrit):-
+    \+((Te > Tcrit,Ts =< Tcrit)),
+    retain_starting_formula(R,StartingFormula,FormulaId, Tcrit).
+retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
+    Te > Tcrit,
+    Ts =< Tcrit,
+    retained_starting_formula((StartingFormula),Ts,FormulaId,Tcrit),!.
+retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
+    Te > Tcrit,
+    Ts =< Tcrit,
+    assertz(retained_starting_formula((StartingFormula),Ts,FormulaId,Tcrit)).
+
 get_retained_tset_formula(OP,PheVars,FormulaId,Tqmw,RetainedIL):-
     retained_tset_formula_intervals(OP,PheVars,FormulaId,Tqmw,RetainedIL).
 get_retained_tset_formula(OP,PheVars,FormulaId,Tqmw,[]):-
@@ -402,7 +396,7 @@ retain_tset_formula(IL,OP,PheVars,FormulaId,Tcrit):-
     retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR),!.
 retain_tset_formula(IL,OP,PheVars,FormulaId,Tcrit):-
     retain_tset_formula_intervals(IL, ILR, Tcrit),
-    assert(retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR)).
+    assertz(retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR)).
 
 retain_tset_formula_intervals([], [], _).
 retain_tset_formula_intervals([[Ts,Te]|ILTail], ILR, Tcrit):-
@@ -423,5 +417,5 @@ retain_relation_formula_temp_info(_,_,_,_,[]):-!.
 retain_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP):-
     retained_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP),!.
 retain_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP):-
-    assert(retained_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP)).
+    assertz(retained_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP)).
 
