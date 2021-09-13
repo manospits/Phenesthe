@@ -28,7 +28,6 @@ swipl -l run.prolog
 ```
 **Step 2 (events output):** ```event_instants(X,T)``` outputs user defined events (X) and the instants (T) at which they are true. For example the event ```unchanged(bob)``` is true at the instant(s) included in list ```T=[3]```.
 ```prolog
-?- query(5). % performs recognition of phenomena at t=5
 ?- event_instants(X,T). % outputs the recognised events
 X = unchanged(bob),
 T = [3] ;
