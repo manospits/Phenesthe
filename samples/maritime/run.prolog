@@ -36,8 +36,9 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     garbage_collect_clauses,
     count_input(IEi,(ISa,ISi),(IDa,IDi)),
     count_results((Ea,Ei),(Sa,Si),(Da,Di)),
-    log_results(LFd,QueryTime,ExecutionTime,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
-    print_results(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
+    log_stats(LFd,QueryTime,ExecutionTime,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
+    print_stats(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
+    print_results(RFd,QueryTime,Window),
     writeln("\n\n"),
     NewQueryTime is QueryTime+Step,!,
     fstream_perform_query((IFd,LFd,RFd),RetainedNew,End,Step,Window,NewQueryTime).
@@ -87,7 +88,7 @@ count_results((Ea,Ei),(Sa,Si),(Da,Di)):-
     length(D_Info,Da),
     sumlist(D_Info,Di).
 
-print_results(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)):-
+print_stats(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)):-
     write('Input event instants: '),  writeln(IEi),
     write('Input state instances/intervals: '), write(ISa), write('/'), writeln(ISi),
     write('Input dynamic phe. instances/intervals: '), write(IDa), write('/'), writeln(IDi),nl,
@@ -95,7 +96,7 @@ print_results(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)):-
     write('User state instances/intervals: '), write(Sa), write('/'), writeln(Si),
     write('User dynamic phe. instances/intervals: '), write(Da), write('/'), writeln(Di).
 
-log_results(LFd,Tq,Rt,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)):-
+log_stats(LFd,Tq,Rt,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)):-
     write_comma_separated(LFd,[Tq,Rt,IEi,ISa,ISi,IDa,IDi,Ea,Ei,Sa,Si,Da,Di]),nl(LFd).
 prepare_log_file(LFd):-
     write_comma_separated(LFd,['query time','processing time','input event instants',
@@ -103,6 +104,14 @@ prepare_log_file(LFd):-
                                'input dynamic phe. intervals', 'user event instances', 'user event instants', 'user state instances',
                                'user state intervals', 'user dynamic phe. instances', 'user dynamic phe. intervals']),
     nl(LFd).
+
+print_results(RFd, QueryTime, Window):-
+    write(RFd,"Tq = "),write(RFd,QueryTime),write(RFd,", W = "),write(RFd,Window),nl(RFd),
+    forall(event_instants(Phenomenon,Instants),writeln(RFd,event_instants(Phenomenon,Instants))),
+    forall((state_intervals(Phenomenon,Intervals),phenomenon_type(Phenomenon,_,user)),writeln(RFd,state_intervals(Phenomenon,Intervals))),
+    forall((dynamic_phenomenon_intervals(Phenomenon,Intervals),phenomenon_type(Phenomenon,_,user)),writeln(RFd,dynamic_phenomenon_intervals(Phenomenon,Intervals))),
+    nl(RFd).
+
 
 write_comma_separated(_Fd,[]).
 write_comma_separated(Fd,[A]):-
