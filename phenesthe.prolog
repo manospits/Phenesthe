@@ -24,6 +24,7 @@
 :-['./src/transformations.prolog'].
 :-['./src/temporal_operators.prolog'].
 :-['./src/temporal_relations.prolog'].
+:-['./src/multithreading.prolog'].
 
 %Definitions loading/pre-processing/storing 
 term_expansion(input_phenomenon(Phenomenon,Type),input_phenomenon(Phenomenon,Type)).
@@ -117,16 +118,18 @@ recognition_query(WindowSize,Step,Tq):-
     my_setval(tqmw,Tqmw),
     my_setval(tq,Tq),
     my_setval(current_window_instants,WindowInstants),
-    process_level(1,WindowSize,Step,Tq).
+    findall(process_phenomenon(X), phenomenon_type(X,_,user), Phenomena),
+    dependency_aware_parallel_execution(Phenomena,[]).
+    %process_level(1,WindowSize,Step,Tq).
 
 process_level(Level,_W,_S,_Tq):-
     \+level(_,Level),!.
 
 process_level(Level, WindowSize, Step, Tq):-
     level(_,Level),!,
-    %findall(_,(level(X,Level),process_phenomenon(X)),_),
-    findall(X,(level(X,Level)),Phenomena),
-    concurrent_maplist(process_phenomenon,Phenomena),
+    findall(_,(level(X,Level),process_phenomenon(X)),_),
+    %findall(X,(level(X,Level)),Phenomena),
+    %concurrent_maplist(process_phenomenon,Phenomena),
     NextLevel is Level + 1,
     process_level(NextLevel, WindowSize, Step, Tq).
 
