@@ -1,11 +1,11 @@
 # Phenesthe
 
-'_Phenesthe_' (orig. φαίνεσθαι) is a system for the representation and processing of instantaneous and durative temporal phenomena. Temporal phenomena may be:
+_Phenesthe_ (orig. φαίνεσθαι) is a system for the representation and processing of instantaneous and durative temporal phenomena. Temporal phenomena may be:
 - events (instantaneous)
 - states (durative)
 - dynamic temporal phenomena (durative)
 
-Given an input stream of input phenomena '_Phenesthe_' will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and Shan Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. Pre-proceedings paper presented at the 31st International Symposium on Logic-Based Program Synthesis and Transformation (LOPSTR 2021) [arXiv:2108.13365](https://arxiv.org/abs/2108.13365)_"
+Given an input stream of input phenomena _Phenesthe_ will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and S. Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. Pre-proceedings paper presented at the 31st International Symposium on Logic-Based Program Synthesis and Transformation (LOPSTR 2021) [arXiv:2108.13365](https://arxiv.org/abs/2108.13365)_"
 ## Features
 
 - A user friendly language that allows the definition of temporal phenomena
@@ -13,9 +13,9 @@ Given an input stream of input phenomena '_Phenesthe_' will produce the instants
 - An engine that allows the recognition of the instants and intervals at which the user defined phenomena are true/hold
 
 ## Installation & Getting Started
-Running '_Phenesthe'_ requires a prolog installation. Specifically it has been tested under [SWI-Prolog](www.swi-prolog.org) 7.6.4.
-#### Running '_Phenesthe_' on the included 'Alice & Bob' sample
-The ```samples/alice_and_bob/``` folder includes an example usage of '_Phenesthe'_. The ```definitions.prolog``` contains definitions of temporal phenomena, the ```narrative.prolog``` contains the input phenomena and 'run.prolog' loads '_Phenesthe_' and preprocesses the phenomena definitions.
+Running _Phenesthe_ requires a prolog installation. Specifically it has been tested under [SWI-Prolog](www.swi-prolog.org) 7.6.4 and 8.2.4.
+#### Running _Phenesthe_ on the included 'Alice & Bob' sample
+The ```samples/alice_and_bob/``` folder includes an example usage of _Phenesthe_. The ```definitions.prolog``` contains definitions of temporal phenomena, the ```narrative.prolog``` contains the input phenomena and 'run.prolog' loads _Phenesthe_ and preprocesses the phenomena definitions.
 
 
 **Step 0 (optional):** Have a look at the phenomena definitions in ```definitions.prolog``` and the narrative at ```narrative.prolog``` in the ```samples/alice_and_bob``` folder.
@@ -48,7 +48,7 @@ I = [[1, inf]].
 ```
 
 #### Writing definitions
-Writing phenomena definitions in '_Phenesthe_'  is a very simple task! In a file called for example ```definitions.prolog```, the user should first declare the input phenomena. As in the included sample this can be done using ```input_phenomenon/2``` as shown below:
+Writing phenomena definitions in _Phenesthe_  is a very simple task! In a file called for example ```definitions.prolog```, the user should first declare the input phenomena. As in the included sample this can be done using ```input_phenomenon/2``` as shown below:
 ```prolog
 input_phenomenon(drop(_Person,_Object),event).
 input_phenomenon(pickup(_Person,_Object),event).
