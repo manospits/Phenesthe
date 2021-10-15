@@ -5,7 +5,6 @@ dependency_aware_parallel_execution(List, _) :-
 
 dependency_aware_parallel_execution(List, Options) :-
     current_prolog_flag(cpu_count, N), !,
-    must_be(positive_integer, N),
     must_be(list(callable), List),
     length(List, JobCount),
     message_queue_create(Done),

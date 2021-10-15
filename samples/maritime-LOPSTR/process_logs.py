@@ -8,6 +8,7 @@ for t in etype:
     for window in windows:
         df = pd.read_csv("log{t}{window}.csv".format(t=t, window=window),delimiter=',',header=0)
         df=df.drop(columns=['query time'])
+        df=df/1000
         avg_std=df.mean().append(df.std(),ignore_index=True)
         all_logs.append(avg_std)
 
@@ -16,5 +17,6 @@ for t in etype:
 
     df=pd.DataFrame(all_logs)
     df.columns=newcols
-    df.index=windows
+    df.index=[w/3600 for w in windows]
+    df.index.name = 'window'
     df.to_csv("log{t}_all.csv".format(t=t),sep=',')

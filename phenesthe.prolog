@@ -120,7 +120,7 @@ recognition_query(WindowSize,Step,Tq):-
     my_setval(current_window_instants,WindowInstants),
     findall(process_phenomenon(X), phenomenon_type(X,_,user), Phenomena),
     dependency_aware_parallel_execution(Phenomena,[]).
-    %process_level(1,WindowSize,Step,Tq).
+%process_level(1,WindowSize,Step,Tq).
 
 process_level(Level,_W,_S,_Tq):-
     \+level(_,Level),!.

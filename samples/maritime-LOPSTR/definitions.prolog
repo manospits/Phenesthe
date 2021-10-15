@@ -12,7 +12,7 @@ event_phenomenon stop_end(V) := ais(V,S,_,_) aand S > 0.5.
 state_phenomenon in_port(V,P) := entersPort(V,P) ~> leavesPort(V,P).
 state_phenomenon in_fishing_area(V,F) := entersFishingArea(V,F) ~> leavesFishingArea(V,F).
 state_phenomenon stopped(V) := stop_start(V) ~> stop_end(V).
-state_phenomenon underway(V) := (ais(V,S,_,_) aand S > 1) ~> (ais(V,S,_,_) aand S<1).
+state_phenomenon underway(V) := (ais(V,S,_,_) aand S >= 2.7) ~> (ais(V,S,_,_) aand S<2.7).
 state_phenomenon moored(V,P) := stopped(V) intersection in_port(V,P).
 
 

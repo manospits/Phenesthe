@@ -33,7 +33,6 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     recognition_query(Window,Step,QueryTime),
     statistics(walltime, [_NewTimeSinceStart | [ExecutionTime]]),
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
-    garbage_collect_clauses,
     count_input(IEi,(ISa,ISi),(IDa,IDi)),
     count_results((Ea,Ei),(Sa,Si),(Da,Di)),
     log_stats(LFd,QueryTime,ExecutionTime,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
