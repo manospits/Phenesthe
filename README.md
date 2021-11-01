@@ -82,23 +82,22 @@ input_dynamic_phenomenon_interval(eventName(arg1,arg2,...,argN),[t1s,t1e])
 ...
 input_dynamic_phenomenon_interval(eventName(arg1,arg2,...,argN),[tNs,tNe])
 ```
-Note that the input is expected to be ordered.
+**Note that the input is expected to be ordered.**
 
-#### Example
+### Using the Phenesthe on the maritime sample
+This part of the tutorial shows how to run Phenesthe on the maritime use case of the included samples. Furthermore, it demonstrates the usage of the file stream parser.
 
-The following example demonstrates the usage of the file stream parser on the maritime sample.
-
-<u>Step 0</u> Navigate to the ```samples/maritime``` folder and extract the dataset ```BREST_phenesthe_input.tar.gz```
+**Step 0** Navigate to the ```samples/maritime``` folder and extract the dataset ```BREST_phenesthe_input.tar.gz```
 ```bash
 tar -xvf BREST_phenesthe_input.tar.gz
 ```
 
-<u>Step 1</u> Open SWI-Prolog and load the initiliasition file.
+**Step 1** Open SWI-Prolog and load the initiliasition file.
 ```prolog
 ?- ['init.prolog'].
 ```
 
-<u>Step 3</u> Perform Complex Event Processing using one week of the available input data.
+**Step 3** Perform Complex Event Processing using one week of the available input data.
 ```prolog
 ?- queries_on_fstream('BREST_phenesthe.input','logs/log7200.csv','results/results7200.out',1443650401,1443650401,7200,7200).
 ```
