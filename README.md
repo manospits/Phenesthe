@@ -6,6 +6,7 @@ _Phenesthe_ (orig. φαίνεσθαι) is a system for the representation and pr
 - dynamic temporal phenomena (durative)
 
 Given an input stream of input phenomena _Phenesthe_ will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and S. Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. Pre-proceedings paper presented at the 31st International Symposium on Logic-Based Program Synthesis and Transformation (LOPSTR 2021) [arXiv:2108.13365](https://arxiv.org/abs/2108.13365)_"
+
 ## Features
 
 - A user friendly language that allows the definition of temporal phenomena
@@ -13,8 +14,11 @@ Given an input stream of input phenomena _Phenesthe_ will produce the instants o
 - An engine that allows the recognition of the instants and intervals at which the user defined phenomena are true/hold
 
 ## Installation & Getting Started
+
 Running _Phenesthe_ requires a prolog installation. Specifically it has been tested under [SWI-Prolog](www.swi-prolog.org) 7.6.4 and 8.2.4.
+
 #### Running _Phenesthe_ on the included 'Alice & Bob' sample
+
 The ```samples/alice_and_bob/``` folder includes an example usage of _Phenesthe_. The ```definitions.prolog``` contains definitions of temporal phenomena, the ```narrative.prolog``` contains the input phenomena and 'run.prolog' loads _Phenesthe_ and preprocesses the phenomena definitions.
 
 
@@ -47,6 +51,7 @@ X = drops_objects_when_hungry(bob),
 I = [[1, inf]].
 ```
 ### Use Phenesthe on a file stream
+
 Phenesthe has a built-in parser for performing Complex Event Processing on a file stream. After the initiliasition of Phenesthe, Complex Event Processing can be performed on a input file stream with the use of the ```queries_on_fstream/7``` predicate.
 ```prolog
  queries_on_fstream(+InputFile, +LogFile, +ResultsFile, +Start, +End, +Step, +Window).
@@ -80,23 +85,26 @@ input_dynamic_phenomenon_interval(eventName(arg1,arg2,...,argN),[tNs,tNe])
 Note that the input is expected to be ordered.
 
 #### Example
+
 The following example demonstrates the usage of the file stream parser on the maritime sample.
 
-**Step 0** Navigate to the ```samples/maritime``` folder and extract the dataset ```BREST_phenesthe_input.tar.gz```
+<u>Step 0</u> Navigate to the ```samples/maritime``` folder and extract the dataset ```BREST_phenesthe_input.tar.gz```
 ```bash
 tar -xvf BREST_phenesthe_input.tar.gz
 ```
 
-**Step 1** Open SWI-Prolog and load the initiliasition file.
+<u>Step 1</u> Open SWI-Prolog and load the initiliasition file.
 ```prolog
 ?- ['init.prolog'].
 ```
 
-**Step 3** Perform Complex Event Processing using one week of the available input data.
+<u>Step 3</u> Perform Complex Event Processing using one week of the available input data.
 ```prolog
 ?- queries_on_fstream('BREST_phenesthe.input','logs/log7200.csv','results/results7200.out',1443650401,1443650401,7200,7200).
 ```
+
 ### Writing definitions
+
 Writing phenomena definitions in _Phenesthe_  is a very simple task! In a file called for example ```definitions.prolog```, the user should first declare the input phenomena. As in the included sample this can be done using ```input_phenomenon/2``` as shown below:
 ```prolog
 input_phenomenon(drop(_Person,_Object),event).
@@ -171,6 +179,9 @@ startEndOp ::= ("start"|"end")"("intervalOperation")";
 
 
 ## Disclaimer
+
 While _Phenesthe_ has undergone through testing, it's still under development.  Therefore some bugs may exist :) . 
+
 ## License
+
 This project is licensed under the terms of the [GNU General Public License version 3.0](https://www.gnu.org/licenses/gpl-3.0.html)
