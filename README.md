@@ -82,7 +82,7 @@ input_dynamic_phenomenon_interval(eventName(arg1,arg2,...,argN),[t1s,t1e])
 ...
 input_dynamic_phenomenon_interval(eventName(arg1,arg2,...,argN),[tNs,tNe])
 ```
-**Note that the input is expected to be ordered.**
+**Note that the input is expected to be ordered (for now).**
 
 ### Using the Phenesthe on the maritime sample
 This part of the tutorial shows how to run Phenesthe on the maritime use case of the included samples. Furthermore, it demonstrates the usage of the file stream parser.
