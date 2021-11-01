@@ -20,7 +20,7 @@ The ```samples/alice_and_bob/``` folder includes an example usage of _Phenesthe_
 
 **Step 0 (optional):** Have a look at the phenomena definitions in ```definitions.prolog``` and the narrative at ```narrative.prolog``` in the ```samples/alice_and_bob``` folder.
 
-**Step 1 (loading):** Load ```run.prolog``` in swipl. Calling ```query(5)``` loads the input phenomena that arrived until '5' and performs a recognition query given that time is '5'.
+**Step 1 (loading):** Load ```run.prolog``` in SWI-Prolog. Calling ```query(5)``` loads the input phenomena that arrived until '5' and performs a recognition query given that time is '5'.
 ```sh
 cd samples/alice_and_bob
 swipl -l run.prolog
@@ -46,8 +46,57 @@ I = [[4, inf]] ;
 X = drops_objects_when_hungry(bob),
 I = [[1, inf]].
 ```
+### Use Phenesthe on a file stream
+Phenesthe has a built-in parser for performing Complex Event Processing on a file stream. After the initiliasition of Phenesthe, Complex Event Processing can be performed on a input file stream with the use of the ```queries_on_fstream/7``` predicate.
+```prolog
+ queries_on_fstream(+InputFile, +LogFile, +ResultsFile, +Start, +End, +Step, +Window).
+```
+Where the arguments are:
+- InputFile: Name of the input file.
+- LogFile: Name of the log file (stattistics for each temporal query).
+- ResultsFile: Printed instants and intervals at which user defined phenomena are true hold.
+- Start: Timestamp to start processing.
+- End: Timestampt to end processing.
+- Step: Window sliding step.
+- Window: Window size.
 
-#### Writing definitions
+The input file must be appropriately formatted.
+An input event ```eventName(arg1,arg2,...,argN)``` occuring at instant 't1' should appear as follows:
+```
+input_event_instant(eventName(arg1,arg2,...,argN),t1)
+```
+an input state ```stateName(arg1,arg2,...,argN)``` holding for the intervals ```[t1s,t1e],...,[tNs,tNe]``` should appear as follows:
+```
+input_state_interval(eventName(arg1,arg2,...,argN),[t1s,t1e])
+...
+input_state_interval(eventName(arg1,arg2,...,argN),[tNs,tNe])
+```
+finally, a dynamic temporal phenomenon holding for the intervals ```[t1s,t1e],...,[tNs,tNe]``` should appear as follows:
+```
+input_dynamic_phenomenon_interval(eventName(arg1,arg2,...,argN),[t1s,t1e])
+...
+input_dynamic_phenomenon_interval(eventName(arg1,arg2,...,argN),[tNs,tNe])
+```
+Note that the input is expected to be ordered.
+
+#### Example
+The following example demonstrates the usage of the file stream parser on the maritime sample.
+
+**Step 0** Navigate to the ```samples/maritime``` folder and extract the dataset ```BREST_phenesthe_input.tar.gz```
+```bash
+tar -xvf BREST_phenesthe_input.tar.gz
+```
+
+**Step 1** Open SWI-Prolog and load the initiliasition file.
+```prolog
+?- ['init.prolog'].
+```
+
+**Step 3** Perform Complex Event Processing using one week of the available input data.
+```prolog
+?- queries_on_fstream('BREST_phenesthe.input','logs/log7200.csv','results/results7200.out',1443650401,1443650401,7200,7200).
+```
+### Writing definitions
 Writing phenomena definitions in _Phenesthe_  is a very simple task! In a file called for example ```definitions.prolog```, the user should first declare the input phenomena. As in the included sample this can be done using ```input_phenomenon/2``` as shown below:
 ```prolog
 input_phenomenon(drop(_Person,_Object),event).
@@ -67,7 +116,7 @@ Here, ```gain(Person)``` is an event phenomenon that is true on the instants a `
 
 **States** are durative phenomena that hold true on disjoint intervals. States can be defined using _disjoint interval formulae_ i.e.,
  - with the use of the maximal range operator ```~>``` between two _instant formulae_, 
- - or they can be defined using the ```union/intersection/complement``` temporal operators between _disjoint interval formulae_.         
+ - or they can be defined using the ```union/intersection/complement``` temporal operators between _disjoint interval formulae_.
 
 For example consider the state definition below:
 ```prolog
@@ -76,6 +125,7 @@ state_phenomenon happy_with_money(Person) :=
      intersection possess(Person,wallet).
 ```
 The ```happy_with_money(Person)```  phenomenon holds true  for the periods a ```Person``` is happy and has money. In detail, a ```Person``` starts being happy when he gains something, and continues to be happy until he loses something.
+
 **Dynamic temporal phenomena** are durative phenomena that may hold on non-disjoint intervals. Dynamic temporal phenomena are defined in terms of _non disjoint interval formulae_. For example: 
 ```prolog
 dynamic_phenomenon drops_objects_when_hungry(Person) :=

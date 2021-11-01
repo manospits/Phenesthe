@@ -4,6 +4,7 @@ input_phenomenon(drop(_Person,_Object),event).
 input_phenomenon(pickup(_Person,_Object),event).
 input_phenomenon(ate(_Person,_Food),event).
 input_phenomenon(hunger(_Person),event).
+input_phenomenon(angry(_Person),state).
 
 %gain when picking up sth and not dropping sth
 event_phenomenon gain(Person) :=
@@ -48,6 +49,12 @@ state_phenomenon sad(Person) :=
 
 state_phenomenon hungry(Person):=
     hunger(Person) ~> ate(Person,_Food).
+
+state_phenomenon hungry_and_angry(Person):=
+    hungry(Person) intersection angry(Person).
+
+state_phenomenon happy_or_angry(Person):=
+    angry(Person) union happy(Person).
 
 state_phenomenon happy_with_money(Person) :=
     happy(Person) intersection possess(Person,wallet).

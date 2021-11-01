@@ -77,7 +77,7 @@ transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
 %input event
 transform_instant_formula(Formula, _PheVars, ProcessedFormula, T):-
     phenomenon_type(Formula,event,input),!,
-    ProcessedFormula=(event_instant(Formula,T)).
+    ProcessedFormula=(input_event_instant(Formula,T)).
 
 %user event (NOTE! User events use instant lists)
 transform_instant_formula(Formula, _PheVars, ProcessedFormula,  T):-
@@ -137,8 +137,12 @@ transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     tset_computation_formula(OP,Lt,Rt,LIL,RIL,IL,PheVars,ProcessedFormula).
 
 transform_dinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
-    phenomenon_type(Formula,state,_),
+    phenomenon_type(Formula,state,user),
     ProcessedFormula=(state_intervals(Formula,IL)).
+
+transform_dinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
+    phenomenon_type(Formula,state,input),
+    ProcessedFormula=(input_state_interval(Formula,I),IL=[I]).
 
 
 tset_computation_formula(OP,LFormula,RFormula,LIL,RIL,IL,PheVars,ProcessedFormula):-
@@ -245,8 +249,12 @@ transform_ndinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     relation_intervals_formula(Relation, FType, LType, RType, LTransformed, RTransformed, LTIL, RTIL, IL, PheVars, ProcessedFormula).
 
 transform_ndinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
-    phenomenon_type(Formula,dynamic_phenomenon,_),
+    phenomenon_type(Formula,dynamic_phenomenon,user),
     ProcessedFormula=(dynamic_phenomenon_intervals_internal(Formula,IL); \+dynamic_phenomenon_intervals_internal(Formula,_),IL=[]).
+
+transform_ndinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
+    phenomenon_type(Formula,dynamic_phenomenon,input),
+    ProcessedFormula=(input_dynamic_phenomenon_interval(Formula,I),IL=[I]).
 
 relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     !,phe_getval(formula_id,FormulaId),

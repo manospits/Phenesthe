@@ -23,14 +23,16 @@
           user_phenomenon/2,
           phenomenon_conditions/2,
           phenomenon_transformed_conditions/3,
-          event_instant/2,
+          input_event_instant/2,
           event_instants/2,
+          input_state_interval/2,
           state_intervals/2,
+          input_dynamic_phenomenon_interval/2,
+          dynamic_phenomenon_intervals/2,
+          dynamic_phenomenon_intervals_internal/2,
           retained_starting_formula/4,
           retained_tset_formula_intervals/5,
           retained_relation_formula_temp_info/5,
-          dynamic_phenomenon_intervals_internal/2,
-          dynamic_phenomenon_intervals/2,
           level/2.
 
 :-multifile input_phenomenon/2.
@@ -164,25 +166,19 @@ discard_redundant(Tqmw,Tqmws):-
     forall(phenomenon_type(X,dynamic_phenomenon,user),retractall(dynamic_phenomenon_intervals_internal(X,_))),
     %retract input entities
     forall((phenomenon_type(X,event,input),
-            event_instant(X,T),
+            input_event_instant(X,T),
             T=<Tqmw),
-           retract(event_instant(X,T))),
+           retract(input_event_instant(X,T))),
     %retract input states
-    findall(state_intervals(X,ILR),(
-        phenomenon_type(X,state,input),
-        state_intervals(X,IL),
-        remaining(IL,Tqmw,ILR)
-    ),SIs),
-    retractall(state_intervals(_,_)),
-    forall(member(state_intervals(X,ILR),SIs),assertz(state_intervals(X,ILR))),
-    %retract dynamic phenomena intervals TODO
-    %findall(dynamic_phenomenon_intervals(X,ILR),(
-        %phenomenon_type(X,dynamic_phenomenon,input),
-        %dynamic_phenomenon_intervals(X,IL),
-        %remaining(IL,Tqmw,ILR)
-    %),DIs),
-    %retractall(dynamic_phenomenon_intervals(_,_)),
-    %forall(member(dynamic_phenomenon_intervals(X,ILR),DIs),assertz(dynamic_phenomenon_intervals(X,ILR))),
+    forall((phenomenon_type(X,state,input),
+        input_state_interval(X,[Ts,Te]),
+        Te=<Tqmw),
+        retract(input_state_interval(X,[Ts,Te]))),
+    %retract dynamic phenomena intervals
+    forall((phenomenon_type(X,dynamic_phenomenon,input),
+        input_dynamic_phenomenon_interval(X,[Ts,Te]),
+        Te=<Tqmw),
+        retract(input_dynamic_phenomenon_interval(X,[Ts,Te]))),
     %retract old retained information
     retractall(retained_starting_formula(_,_,_,Tqmws)),
     retractall(retained_tset_formula_intervals(_,_,_,Tqmws,_)),

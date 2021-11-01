@@ -43,10 +43,10 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     recognition_query(Window,Step,QueryTime),
     statistics(walltime, [_NewTimeSinceStart | [ExecutionTime]]),
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
-    count_input(IEi,(ISa,ISi),(IDa,IDi)),
+    count_input(IEi,ISi,IDi),
     count_results((Ea,Ei),(Sa,Si),(Da,Di)),
-    log_stats(LFd,QueryTime,ExecutionTime,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
-    print_stats(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)),
+    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)),
+    print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)),
     print_results(RFd,QueryTime,Window),
     writeln("\n\n"),
     NewQueryTime is QueryTime+Step,!,
@@ -65,25 +65,42 @@ read_lines2(_Fd,_String,-1,_End,_QueryTime,[]).
 
 read_lines2(_Fd,String,_Sep,End,QueryTime,[InputPhe]):-
     term_string(InputPhe,String),
-    InputPhe=event_instant(_X,T),
-    ((T>End);(T>QueryTime)),!.
+    (
+        (InputPhe=input_event_instant(_X,T),
+            ((T>End);(T>QueryTime)),!)
+        ;
+        (InputPhe=input_state_interval(_X,[_,Te]),
+            ((Te>End);(Te>QueryTime)),!)
+        ;
+        (InputPhe=input_dynamic_phenomenon_interval(_X,[_,Te]),
+            ((Te>End);(Te>QueryTime)),!)
+    ).
+
 read_lines2(Fd,String,_Sep,End,QueryTime,Retained):-
     term_string(InputPhe,String),
-    InputPhe=event_instant(_X,T),
-    T=<End,T=<QueryTime,
-    assert(InputPhe),
+    (
+        (InputPhe=input_event_instant(_X,T),
+         T=<End,T=<QueryTime,
+         assert(InputPhe))
+        ;
+        (InputPhe=input_state_interval(_X,[_,Te]),
+         Te=<End,Te=<QueryTime,
+         assert(InputPhe))
+        ;
+        (InputPhe=input_dynamic_phenomenon_interval(_X,[_,Te]),
+         Te=<End,Te=<QueryTime,
+         assert(InputPhe))
+    ),
     read_lines(Fd,End,QueryTime,Retained).
 
 
-count_input(Ei,(Sa,Si),(Da,Di)):-
-    findall(T,(event_instant(X,T)),E_Info),
+count_input(Ei,Si,Di):-
+    findall(T,(input_event_instant(X,T)),E_Info),
     length(E_Info,Ei),
-    findall(L,(state_intervals(X,TL),phenomenon_type(X,_,input),length(TL,L)),S_Info),
-    length(S_Info,Sa),
-    sumlist(S_Info,Si),
-    findall(L,(dynamic_phenomenon_intervals(X,TL),phenomenon_type(X,_,input),length(TL,L)),D_Info),
-    length(D_Info,Da),
-    sumlist(D_Info,Di).
+    findall(L,(input_state_interval(X,I)),S_Info),
+    length(S_Info,Si),
+    findall(L,(input_dynamic_phenomenon_interval(X,I)),D_Info),
+    length(D_Info,Di).
 
 
 count_results((Ea,Ei),(Sa,Si),(Da,Di)):-
@@ -97,22 +114,21 @@ count_results((Ea,Ei),(Sa,Si),(Da,Di)):-
     length(D_Info,Da),
     sumlist(D_Info,Di).
 
-print_stats(IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)):-
+print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)):-
     write('Input event instants: '),  writeln(IEi),
-    write('Input state instances/intervals: '), write(ISa), write('/'), writeln(ISi),
-    write('Input dynamic phe. instances/intervals: '), write(IDa), write('/'), writeln(IDi),nl,
+    write('Input intervals: '), writeln(ISi),
+    write('Input dynamic phe. intervals: '), writeln(IDi),nl,
     write('User event instances/instants: '), write(Ea), write('/'), writeln(Ei),
     write('User state instances/intervals: '), write(Sa), write('/'), writeln(Si),
     write('User dynamic phe. instances/intervals: '), write(Da), write('/'), writeln(Di).
 
-log_stats(LFd,Tq,Rt,IEi,(ISa,ISi),(IDa,IDi),(Ea,Ei),(Sa,Si),(Da,Di)):-
-    write_comma_separated(LFd,[Tq,Rt,IEi,ISa,ISi,IDa,IDi,Ea,Ei,Sa,Si,Da,Di]),nl(LFd).
+log_stats(LFd,Tq,Rt,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)):-
+    write_comma_separated(LFd,[Tq,Rt,IEi,ISi,IDi,Ea,Ei,Sa,Si,Da,Di]),nl(LFd).
 prepare_log_file(LFd):-
-    write_comma_separated(LFd,['query time','processing time','input event instants',
-                               'input state instances', 'input state intervals', 'input dynamic phe. instances',
-                               'input dynamic phe. intervals', 'user event instances', 'user event instants', 'user state instances',
-                               'user state intervals', 'user dynamic phe. instances', 'user dynamic phe. intervals']),
-    nl(LFd).
+    write_comma_separated(LFd,['query time','processing time','input event instants','input state intervals',
+                               'input dynamic phe. intervals', 'user event instances', 'user event instants',
+                               'user state instances','user state intervals', 'user dynamic phe. instances',
+                               'user dynamic phe. intervals']), nl(LFd).
 
 print_results(RFd, QueryTime, Window):-
     write(RFd,"Tq = "),write(RFd,QueryTime),write(RFd,", W = "),write(RFd,Window),nl(RFd),

@@ -35,7 +35,7 @@ test(case3):-
 test(query1):-
     assert_input_phenomena(10),
     recognition_query(5,5,10),
-    findall(_,(event_instant(_,T),T=<5),[]).
+    findall(_,(input_event_instant(_,T),T=<5),[]).
 
 %same as case0
 test(case4):-
