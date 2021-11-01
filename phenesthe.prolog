@@ -1,3 +1,19 @@
+% Phenesthe is a system for the representation and processing of temporal phenomena.
+%
+% Copyright (C) 2021 Manolis Pitsikalis
+%
+% This program is free software: you can redistribute it and/or modify it under
+% the terms of the GNU General Public License as published by the Free Software
+% Foundation, either version 3 of the License, or (at your option) any later
+% version.
+%
+% This program is distributed in the hope that it will be useful, but WITHOUT
+% ANY WARRANTY; without even the implied warranty of  MERCHANTABILITY or FITNESS
+% FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License along with
+% this program.  If not, see <http://www.gnu.org/licenses/>.
+
 :-use_module(library(lists)).
 :-use_module(library(ordsets)).
 
@@ -24,9 +40,13 @@
 :-['./src/transformations.prolog'].
 :-['./src/temporal_operators.prolog'].
 :-['./src/temporal_relations.prolog'].
+:-['./src/fstream_processing.prolog'].
 :-['./src/multithreading.prolog'].
 
-%Definitions loading/pre-processing/storing 
+% Multithreading is by default on.
+:-phe_setval(multithreading,1).
+
+%Definitions loading/pre-processing/storing
 term_expansion(input_phenomenon(Phenomenon,Type),input_phenomenon(Phenomenon,Type)).
 term_expansion(:=(event_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,event)).
 term_expansion(:=(state_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,state)).
@@ -50,7 +70,7 @@ preprocess_phenomena_definitions:-
         assertz(dependencies(X,D))
         )
     ,_),
-    my_setval(formula_id,0),
+    phe_setval(formula_id,0),
     findall(_,(
         phenomenon_type(X,_,PType),
         preprocess_phenomenon_definition(X,PType),
@@ -114,13 +134,16 @@ recognition_query(WindowSize,Step,Tq):-
     discard_redundant(Tqmw,Tqmws),
     Tqmw1 is Tqmw+1,
     create_window_instants(Tqmw1,Tq,WindowInstants),
-    my_setval(tcrit,Tcrit),
-    my_setval(tqmw,Tqmw),
-    my_setval(tq,Tq),
-    my_setval(current_window_instants,WindowInstants),
+    phe_setval(tcrit,Tcrit),
+    phe_setval(tqmw,Tqmw),
+    phe_setval(tq,Tq),
+    phe_setval(current_window_instants,WindowInstants),
     findall(process_phenomenon(X), phenomenon_type(X,_,user), Phenomena),
-    dependency_aware_parallel_execution(Phenomena,[]).
-%process_level(1,WindowSize,Step,Tq).
+    (phe_getval(multithreading, 1) ->
+        dependency_aware_parallel_execution(Phenomena,[])
+        ;
+        process_level(1,WindowSize,Step,Tq)
+    ).
 
 process_level(Level,_W,_S,_Tq):-
     \+level(_,Level),!.

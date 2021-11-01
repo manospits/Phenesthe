@@ -339,11 +339,11 @@ ground_check(A,no):-
     \+ground(A).
 
 
-my_setval(X,C):-
+phe_setval(X,C):-
     ((val(X,_),!,retract(val(X,_)));
      (\+val(X,_))),
     assertz(val(X,C)).
-my_getval(X,C):-
+phe_getval(X,C):-
     val(X,C).
 
 clean_from_unk(L,Lcleaned):-

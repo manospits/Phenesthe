@@ -69,7 +69,7 @@ transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
     variable_list_diff(RAtVars,[Ti|PheVars],RAtVarsUnrelated),
     ProcessedFormula=(
         setof_empty(Ti,RAtVarsUnrelated^RAt,RInstantList),
-        my_getval(current_window_instants,InstantListW),
+        phe_getval(current_window_instants,InstantListW),
         ord_subtract(InstantListW,RInstantList,InstantList),
         member(T,InstantList)
     ).
@@ -142,7 +142,7 @@ transform_dinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
 
 
 tset_computation_formula(OP,LFormula,RFormula,LIL,RIL,IL,PheVars,ProcessedFormula):-
-    my_getval(formula_id,FormulaId),
+    phe_getval(formula_id,FormulaId),
     term_variables(LFormula,LFormulaVars),
     term_variables(RFormula,RFormulaVars),
     variable_list_diff(LFormulaVars,[LIL|PheVars],LVarsUnrelated),
@@ -164,7 +164,7 @@ tset_computation_formula(OP,LFormula,RFormula,LIL,RIL,IL,PheVars,ProcessedFormul
           ),
           merge_disjoint_interval_lists(LILists,LIListsUnion),
           merge_disjoint_interval_lists(RILists,RIListsUnion),
-          my_getval(tqmw,Tqmw),my_getval(tcrit,Tcrit),
+          phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
           %split information on window start to avoid rewriting history
           split_on_t(Tqmw,LIListsUnion,_LILbeforeTqmw,LILafterTqmw),
           split_on_t(Tqmw,RIListsUnion,_RILbeforeTqmw,RILafterTqmw),
@@ -176,7 +176,7 @@ tset_computation_formula(OP,LFormula,RFormula,LIL,RIL,IL,PheVars,ProcessedFormul
           splice_interval_sets(RetainedILbt,CurrentWIL,IL),
           retain_tset_formula(IL,OP,LRVarsRelated,FormulaId,Tcrit)
     ),
-    FormulaIdp1 is FormulaId+1,my_setval(formula_id,FormulaIdp1).
+    FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 
 compute_tset_intervals(union,SEL,IL):-compute_union_intervals(SEL,0,0,_,IL).
@@ -184,14 +184,14 @@ compute_tset_intervals(intersection,SEL,IL):-compute_intersection_intervals(SEL,
 compute_tset_intervals(complement,SEL,IL):-compute_complement_intervals(SEL,0,0,_,IL).
 
 maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheVars,ProcessedFormula):-
-    my_getval(formula_id,FormulaId),
+    phe_getval(formula_id,FormulaId),
     term_variables(StartingFormula,SVars),
     term_variables(EndingFormula,EVars),
     variable_list_diff(SVars,[Ts|PheVars],SVarsUnrelated),
     variable_list_diff(EVars,[Te|PheVars],EVarsUnrelated),
     variable_list_diff(SVars,SVarsUnrelated,SVarsRelated),
     ProcessedFormula=(
-        my_getval(tqmw,Tqmw),my_getval(tcrit,Tcrit),
+        phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         (
           (
            setof(TsRetained,retained_starting_formula(SVarsRelated,TsRetained,FormulaId,Tqmw),StartingPointsRetained),
@@ -209,7 +209,7 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
         compute_maximal_intervals(SEList,(_,n),IL),
         retain_starting_formula(IL, SVarsRelated, FormulaId, Tcrit)
     ),
-    FormulaIdp1 is FormulaId+1,my_setval(formula_id,FormulaIdp1).
+    FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 
 %--------------------------------------------------------------
@@ -249,7 +249,7 @@ transform_ndinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     ProcessedFormula=(dynamic_phenomenon_intervals_internal(Formula,IL); \+dynamic_phenomenon_intervals_internal(Formula,_),IL=[]).
 
 relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
-    !,my_getval(formula_id,FormulaId),
+    !,phe_getval(formula_id,FormulaId),
     term_variables(LFormula,LFormulaVars),
     term_variables(RFormula,RFormulaVars),
     variable_list_diff(LFormulaVars, [LIL|PheVars], LVarsUnrelated),
@@ -258,7 +258,7 @@ relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RI
     variable_list_intersection(LRVars,PheVars,LRVarsRelatedWithT),
     variable_list_diff(LRVarsRelatedWithT,[LIL,RIL],LRVarsRelated),
     ProcessedFormula=(
-        my_getval(tqmw,Tqmw),my_getval(tcrit,Tcrit),
+        phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         (
           (
             setof(RetainedLILi,retained_relation_formula_temp_info(before,LRVarsRelated,FormulaId,Tqmw,RetainedLILi),RetainedLILs),
@@ -281,12 +281,12 @@ relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RI
         %retain intervals that end before tcrit and participate in recognised intervals that overlap tcrit
         retain_relation_formula_temp_info(before,LRVarsRelated,FormulaId,Tcrit,AP)
     ),
-    FormulaIdp1 is FormulaId+1,my_setval(formula_id,FormulaIdp1).
+    FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 
 relation_intervals_formula(Relation, FT, LType, RType,LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     member(Relation,[meets,overlaps,starts]),!,
-    my_getval(formula_id,FormulaId),
+    phe_getval(formula_id,FormulaId),
     term_variables(LFormula,LFormulaVars),
     term_variables(RFormula,RFormulaVars),
     variable_list_diff(LFormulaVars, [LIL|PheVars], LVarsUnrelated),
@@ -295,7 +295,7 @@ relation_intervals_formula(Relation, FT, LType, RType,LFormula, RFormula, LIL, R
     variable_list_intersection(LRVars,PheVars,LRVarsRelatedWithT),
     variable_list_diff(LRVarsRelatedWithT,[LIL,RIL],LRVarsRelated),
     ProcessedFormula=(
-        my_getval(tqmw,Tqmw),my_getval(tcrit,Tcrit),
+        phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         (
           (
             setof(RetainedLILi,retained_relation_formula_temp_info(Relation,LRVarsRelated,FormulaId,Tqmw,RetainedLILi),RetainedLILs),
@@ -315,10 +315,10 @@ relation_intervals_formula(Relation, FT, LType, RType,LFormula, RFormula, LIL, R
         compute_relation_intervals(Relation, FT, LILcombined, MergedRIList, IL, NonRedundantA, Tcrit),
         retain_relation_formula_temp_info(Relation,LRVarsRelated,FormulaId,Tcrit,NonRedundantA)
     ),
-    FormulaIdp1 is FormulaId+1,my_setval(formula_id,FormulaIdp1).
+    FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 relation_intervals_formula(contains, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
-    !,my_getval(formula_id,FormulaId),
+    !,phe_getval(formula_id,FormulaId),
     term_variables(LFormula,LFormulaVars),
     term_variables(RFormula,RFormulaVars),
     variable_list_diff(LFormulaVars, [LIL|PheVars], LVarsUnrelated),
@@ -327,7 +327,7 @@ relation_intervals_formula(contains, FT, LType, RType, LFormula, RFormula, LIL, 
     variable_list_intersection(LRVars,PheVars,LRVarsRelatedWithT),
     variable_list_diff(LRVarsRelatedWithT,[LIL,RIL],LRVarsRelated),
     ProcessedFormula=(
-        my_getval(tqmw,Tqmw),my_getval(tcrit,Tcrit),
+        phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         setof_empty(LIL,LVarsUnrelated^LFormula,LILists),
         setof_empty(RIL,RVarsUnrelated^RFormula,RILists),
         merge_temporal_information_lists(LType, LILists,MergedLIList),
@@ -338,7 +338,7 @@ relation_intervals_formula(contains, FT, LType, RType, LFormula, RFormula, LIL, 
         compute_relation_intervals(contains, FT, MergedLIList, RILcombined, IL, NonRedundantB, Tcrit),
         retain_relation_formula_temp_info(contains,LRVarsRelated,FormulaId,Tcrit,NonRedundantB)
     ),
-    FormulaIdp1 is FormulaId+1,my_setval(formula_id,FormulaIdp1).
+    FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 relation_intervals_formula(finishes, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     !,term_variables(LFormula,LFormulaVars),
@@ -350,7 +350,7 @@ relation_intervals_formula(finishes, FT, LType, RType, LFormula, RFormula, LIL, 
         setof_empty(RIL,RVarsUnrelated^RFormula,RILists),
         merge_temporal_information_lists(LType, LILists,MergedLIList),
         merge_temporal_information_lists(RType, RILists,MergedRIList),
-        my_getval(tcrit,Tcrit),
+        phe_getval(tcrit,Tcrit),
         compute_relation_intervals(finishes, FT, MergedLIList, MergedRIList, IL, Tcrit)
     ).
 

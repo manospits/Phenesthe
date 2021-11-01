@@ -1,10 +1,20 @@
-:-['../../phenesthe.prolog'].
-:-['definitions.prolog'].
-:-preprocess_phenomena_definitions.
+% Author: Manolis Pitsikalis
 %
-% BREST
-% one week 
-% queries_on_fstream('BREST_phenesthe_input.csv',1443650401,1444255201,86400,86400).
+% Perform Complex Event Processing using a file stream
+%
+% -- USAGE --
+% ?- queries_on_fstream(+InputFile, +LogFile, +ResultsFile, +Start, +End, +Step, +Window).
+%
+% -- VARIABLES --
+%   InputFile: Name of the input file.
+%   LogFile: Name of the log file (stattistics for each temporal query).
+%   ResultsFile: Printed instants and intervals at which user defined phenomena are true hold.
+%   Start: Timestamp to start processing.
+%   End: Timestampt to end processing.
+%   Step: Window sliding step.
+%   Window: Window size.
+%
+% NOTE: initialisation of Phenesthe must happen before calling the queries_on_fstream predicate.
 
 queries_on_fstream(InputFile,LogFile,ResultsFile,Start,End,Step,Window):-
     open(InputFile,read,IFd,[alias(input)]),
