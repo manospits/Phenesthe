@@ -99,7 +99,7 @@ tar -xvf BREST_phenesthe_input.tar.gz
 
 **Step 2:** Perform Complex Event Processing using one week of the available input data.
 ```prolog
-?- queries_on_fstream('BREST_phenesthe.input','logs/log7200.csv','results/results7200.out',1443650401,1443650401,7200,7200).
+?- queries_on_fstream('BREST_phenesthe.input','logs/log7200.csv','results/results7200.out',1443650401,1444255201,7200,7200).
 ```
 
 ### Writing definitions
