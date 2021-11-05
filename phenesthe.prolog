@@ -153,8 +153,6 @@ process_level(Level,_W,_S,_Tq):-
 process_level(Level, WindowSize, Step, Tq):-
     level(_,Level),!,
     findall(_,(level(X,Level),process_phenomenon(X)),_),
-    %findall(X,(level(X,Level)),Phenomena),
-    %concurrent_maplist(process_phenomenon,Phenomena),
     NextLevel is Level + 1,
     process_level(NextLevel, WindowSize, Step, Tq).
 
