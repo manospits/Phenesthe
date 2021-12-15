@@ -1,2 +1,4 @@
 Source: Cyril Ray et. al. Heterogeneous integrated dataset for Maritime Intelligence, surveillance, and reconnaissance. Data in Brief, Volume 25, 2019.
 Preprocessing: M. Pitsikalis et. al. Composite Event Recognition for Maritime Monitoring. DEBS '19
+
+Note Git LFS is required to download the compressed dataset file.
