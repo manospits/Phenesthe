@@ -8,14 +8,12 @@ compute_relation_intervals(finishes,FT,A,B,IL,Tc):-compute_finishes_intervals(FT
 compute_relation_intervals(equals,FT,A,B,IL):-compute_equals_intervals(FT,A,B,IL).
 
 
-
 %------------------------------------------------------------
 %------------------------------------------------------------
 %computation of before intervals
 %------------------------------------------------------------
 %------------------------------------------------------------
-compute_before_intervals(_,[],[],[],[],_).
-compute_before_intervals(_,[],[_],[],[],_).
+compute_before_intervals(_,[],_,[],[],_).
 compute_before_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
     last_ending_temporal_entities([A|R],ALast),
     create_intervals(keepnot,[[unk,unk]],[[unk,unk]],ALast, IL, NonRedundantA,Tcrit).
@@ -44,11 +42,18 @@ compute_before_intervals2(d,[_|RL],B,NIL,I,AP):-
     compute_before_intervals2(d,RL,B,NIL,I,AP).
 
 compute_before_intervals2(d,[A|RL],B,RL,[TSA,TEB],A):-
-    RL=[A2|_],
     temporal_information(A,TSA,_TEA,_),
-    temporal_information(A2,_TSA2,TEA2,_),
     temporal_information(B,TSB,TEB,_),
-    geq(TEA2,TSB).
+    (
+        (
+         RL=[A2|_],
+         temporal_information(A2,_TSA2,TEA2,_),
+         geq(TEA2,TSB)
+        );
+        (
+         RL=[]
+        )
+    ).
 
 compute_before_intervals2(d,[A|[]],B,[],[TSA,TEB],A):-
     temporal_information(A,TSA,_TEA,_),
@@ -145,8 +150,7 @@ compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,[A|NRL],I,NonRedundantA,T):-
 %computation of the intervals of a meets relation
 %------------------------------------------------------------
 %------------------------------------------------------------
-compute_meets_intervals(_,[],[],[],[],_):-!.
-compute_meets_intervals(_,[],[_|_],[],[],_):-!.
+compute_meets_intervals(_,[],_,[],[],_):-!.
 compute_meets_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
     unk_or_inf_temporal_entities([A|R],AUI),
     create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
@@ -221,8 +225,7 @@ compute_meets_intervals2(nd,[],[B|RR], [], CORS, IL, NonRedundantA, Tcrit):-
 %computation of the intervals of an overlaps  relation
 %------------------------------------------------------------
 %------------------------------------------------------------
-compute_overlaps_intervals(_,[],[],[],[],_):-!.
-compute_overlaps_intervals(_,[],[_|_],[],[],_):-!.
+compute_overlaps_intervals(_,[],_,[],[],_):-!.
 compute_overlaps_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
     unk_or_inf_temporal_entities([A|R],AUI),
     create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
@@ -420,8 +423,7 @@ compute_finishes_intervals2(nd,[],B, [], CORS, IL, Tcrit):-
 %computation of the intervals of a starts relation
 %------------------------------------------------------------
 %------------------------------------------------------------
-compute_starts_intervals(_,[],[],[],[],_):-!.
-compute_starts_intervals(_,[],[_|_],[],[],_):-!.
+compute_starts_intervals(_,[],_,[],[],_):-!.
 compute_starts_intervals(_,[_|_],[],[],[],_):-!.
 
 %------------------------------------------------------------
@@ -519,9 +521,8 @@ compute_starts_intervals2(nd,[], B, [], CORS,  IL, NonRedundantA,Tcrit):-
 %computation of the intervals of a equals relation
 %------------------------------------------------------------
 %------------------------------------------------------------
-compute_equals_intervals(_,[],[],[]):-!.
-compute_equals_intervals(_,[],[_|_],[]):-!.
-compute_equals_intervals(_,[_|_],[],[]):-!.
+compute_equals_intervals(_,[],_,[]):-!.
+compute_equals_intervals(_,_,[],[]):-!.
 
 %------------------------------------------------------------
 %participating phenomena are states
@@ -607,8 +608,7 @@ compute_equals_intervals2(nd,[],[_|_RR], [], _CORS, []).
 %computation of the intervals of a contains relation
 %------------------------------------------------------------
 %------------------------------------------------------------
-compute_contains_intervals(_,[],[],[],[],_):-!.
-compute_contains_intervals(_,[],[_|_],[],[],_):-!.
+compute_contains_intervals(_,[],_,[],[],_):-!.
 compute_contains_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-!,
     unk_or_inf_temporal_entities([A|R],AUI),
     create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
