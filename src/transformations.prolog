@@ -262,19 +262,18 @@ relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RI
     term_variables(RFormula,RFormulaVars),
     variable_list_diff(LFormulaVars, [LIL|PheVars], LVarsUnrelated),
     variable_list_diff(RFormulaVars, [RIL|PheVars], RVarsUnrelated),
-    term_variables([LFormulaVars,RFormulaVars],LRVars),
-    variable_list_intersection(LRVars,PheVars,LRVarsRelatedWithT),
-    variable_list_diff(LRVarsRelatedWithT,[LIL,RIL],LRVarsRelated),
+    variable_list_intersection(LFormulaVars,PheVars,LVarsRelatedWithT),
+    variable_list_diff(LVarsRelatedWithT,[LIL],LVarsRelated),
     ProcessedFormula=(
         phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         (
           (
-            setof(RetainedLILi,retained_relation_formula_temp_info(before,LRVarsRelated,FormulaId,Tqmw,RetainedLILi),RetainedLILs),
+            setof(RetainedLILi,retained_relation_formula_temp_info(before,LVarsRelated,FormulaId,Tqmw,RetainedLILi),RetainedLILs),
             setof_empty(LIL,LVarsUnrelated^LFormula,LILists)
           );
           (
             setof_empty(LIL,LVarsUnrelated^LFormula,LILists),
-            \+setof(RetainedLILi,retained_relation_formula_temp_info(before,LRVarsRelated,FormulaId,Tqmw,RetainedLILi),_),
+            \+setof(RetainedLILi,retained_relation_formula_temp_info(before,LVarsRelated,FormulaId,Tqmw,RetainedLILi),_),
             RetainedLILs=[]
           )
         ),
@@ -287,7 +286,7 @@ relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RI
         merge_temporal_information_lists(LType,[RetainedLIL,MergedLIList],LILcombined),
         compute_before_intervals(FT,LILcombined,MergedRIList,IL,AP,Tcrit),
         %retain intervals that end before tcrit and participate in recognised intervals that overlap tcrit
-        retain_relation_formula_temp_info(before,LRVarsRelated,FormulaId,Tcrit,AP)
+        retain_relation_formula_temp_info(before,LVarsRelated,FormulaId,Tcrit,AP)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
@@ -299,19 +298,18 @@ relation_intervals_formula(Relation, FT, LType, RType,LFormula, RFormula, LIL, R
     term_variables(RFormula,RFormulaVars),
     variable_list_diff(LFormulaVars, [LIL|PheVars], LVarsUnrelated),
     variable_list_diff(RFormulaVars, [RIL|PheVars], RVarsUnrelated),
-    term_variables([LFormulaVars,RFormulaVars],LRVars),
-    variable_list_intersection(LRVars,PheVars,LRVarsRelatedWithT),
-    variable_list_diff(LRVarsRelatedWithT,[LIL,RIL],LRVarsRelated),
+    variable_list_intersection(LFormulaVars,PheVars,LVarsRelatedWithT),
+    variable_list_diff(LVarsRelatedWithT,[LIL],LVarsRelated),
     ProcessedFormula=(
         phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         (
           (
-            setof(RetainedLILi,retained_relation_formula_temp_info(Relation,LRVarsRelated,FormulaId,Tqmw,RetainedLILi),RetainedLILs),
+            setof(RetainedLILi,retained_relation_formula_temp_info(Relation,LVarsRelated,FormulaId,Tqmw,RetainedLILi),RetainedLILs),
             setof_empty(LIL,LVarsUnrelated^LFormula,LILists)
           );
           (
             setof_empty(LIL,LVarsUnrelated^LFormula,LILists),
-            \+setof(RetainedLILi,retained_relation_formula_temp_info(Relation,LRVarsRelated,FormulaId,Tqmw,RetainedLILi),_),
+            \+setof(RetainedLILi,retained_relation_formula_temp_info(Relation,LVarsRelated,FormulaId,Tqmw,RetainedLILi),_),
             RetainedLILs=[]
           )
         ),
@@ -321,7 +319,7 @@ relation_intervals_formula(Relation, FT, LType, RType,LFormula, RFormula, LIL, R
         merge_temporal_information_lists(LType, RetainedLILs,RetainedLIL),
         ord_merge(RetainedLIL,MergedLIList,LILcombined),
         compute_relation_intervals(Relation, FT, LILcombined, MergedRIList, IL, NonRedundantA, Tcrit),
-        retain_relation_formula_temp_info(Relation,LRVarsRelated,FormulaId,Tcrit,NonRedundantA)
+        retain_relation_formula_temp_info(Relation,LVarsRelated,FormulaId,Tcrit,NonRedundantA)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
