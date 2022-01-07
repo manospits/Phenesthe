@@ -339,7 +339,6 @@ relation_intervals_formula(contains, FT, LType, RType, LFormula, RFormula, LIL, 
         merge_temporal_information_lists(LType, LILists,MergedLIList),
         merge_temporal_information_lists(RType, RILists,MergedRIList),
         get_retained_relation_formula_temp_info(contains,LRVarsRelated,FormulaId,Tqmw,RetainedRIL),
-        ground(PheVars),
         merge_temporal_information_lists(RType, [RetainedRIL,MergedRIList], RILcombined),
         compute_relation_intervals(contains, FT, MergedLIList, RILcombined, IL, NonRedundantB, Tcrit),
         retain_relation_formula_temp_info(contains,LRVarsRelated,FormulaId,Tcrit,NonRedundantB)
