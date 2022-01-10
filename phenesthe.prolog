@@ -16,6 +16,7 @@
 
 :-use_module(library(lists)).
 :-use_module(library(ordsets)).
+:-set_prolog_flag(optimise, true).
 
 :-dynamic dependencies/2,
           atemporal/1,
@@ -180,7 +181,7 @@ discard_redundant(Tqmw,Tqmws):-
     %retract old retained information
     retractall(retained_starting_formula(_,_,_,Tqmws)),
     retractall(retained_tset_formula_intervals(_,_,_,Tqmws,_)),
-    retractall(retained_relation_formula_intervals(_,_,_,Tqmws,_)).
+    retractall(retained_relation_formula_temp_info(_,_,_,Tqmws,_)).
 
 
 process_phenomenon(Phenomenon):-
