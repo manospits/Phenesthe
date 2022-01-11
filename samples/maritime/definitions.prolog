@@ -18,10 +18,10 @@ state_phenomenon moored(V,P) := stopped(V) intersection in_port(V,P).
 
 dynamic_phenomenon trip(V,PA,PB):=
     end(moored(V,PA)) before
-     (underway(V) before start(moored(V,PB))).
+     ((underway(V) complement in_port(V,_)) before start(moored(V,PB))).
 
 dynamic_phenomenon fishing_trip(V,PA,FA,PB):=
-    end(moored(V,PA)) before 
+    (end(moored(V,PA)) aand vessel_type(V,fishing)) before
         ((underway(V) contains in_fishing_area(V,FA))
             before start(moored(V,PB))).
 
