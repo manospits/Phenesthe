@@ -45,11 +45,14 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
     count_input(IEi,ISi,IDi),
     count_results((Ea,Ei),(Sa,Si),(Da,Di)),
+    count_retained(MrOPRetained,TSetOpRetained,TRelRetained),
     log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)),
-    print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)),
+    print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),MrOPRetained,TSetOpRetained,TRelRetained),
     print_results(RFd,QueryTime,Window),
     writeln("\n\n"),
-    NewQueryTime is QueryTime+Step,!,
+    NewQueryTime is QueryTime+Step,
+    garbage_collect, trim_stacks,
+    !,
     fstream_perform_query((IFd,LFd,RFd),RetainedNew,End,Step,Window,NewQueryTime).
 
 assert_from_stream(Fd,Retained,RetainedNew,End,QueryTime):-
@@ -114,13 +117,25 @@ count_results((Ea,Ei),(Sa,Si),(Da,Di)):-
     length(D_Info,Da),
     sumlist(D_Info,Di).
 
-print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)):-
+count_retained(MrOPRetained,TSetOpRetained,TRelRetained):-
+    findall(_,retained_starting_formula(_,_,_,_),A),
+    findall(_,retained_tset_formula_intervals(_,_,_,_,_),B),
+    findall(_,retained_relation_formula_temp_info(_,_,_,_,_),C),
+    length(A,MrOPRetained),
+    length(B,TSetOpRetained),
+    length(C,TRelRetained).
+
+
+print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di), MrOPRetained, TSetOpRetained, TRelRetained):-
     write('Input event instants: '),  writeln(IEi),
     write('Input intervals: '), writeln(ISi),
     write('Input dynamic phe. intervals: '), writeln(IDi),nl,
     write('User event instances/instants: '), write(Ea), write('/'), writeln(Ei),
     write('User state instances/intervals: '), write(Sa), write('/'), writeln(Si),
-    write('User dynamic phe. instances/intervals: '), write(Da), write('/'), writeln(Di).
+    write('User dynamic phe. instances/intervals: '), write(Da), write('/'), writeln(Di),nl,
+    write('Maximal range operator ret. clauses: '), writeln(MrOPRetained),
+    write('Temporal set operator ret. clauses: '), writeln(TSetOpRetained),
+    write('Temporal relations ret. clauses: '), writeln(TRelRetained).
 
 log_stats(LFd,Tq,Rt,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)):-
     write_comma_separated(LFd,[Tq,Rt,IEi,ISi,IDi,Ea,Ei,Sa,Si,Da,Di]),nl(LFd).
