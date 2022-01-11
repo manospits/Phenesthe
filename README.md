@@ -5,7 +5,7 @@ _Phenesthe_ (orig. φαίνεσθαι) is a system for the representation and pr
 - states (durative)
 - dynamic temporal phenomena (durative)
 
-Given an input stream of input phenomena _Phenesthe_ will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and S. Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. Pre-proceedings paper presented at the 31st International Symposium on Logic-Based Program Synthesis and Transformation (LOPSTR 2021) [arXiv:2108.13365](https://arxiv.org/abs/2108.13365)_"
+Given an input stream of input phenomena _Phenesthe_ will produce the instants or intervals at which user defined temporal phenomena are true or hold. More details can be found in "_M. Pitsikalis, A. Lisitsa and S. Luo. 2021. Representation and Processing of Instantaneous and Durative Temporal Phenomena. Pre-proceedings paper presented at the 31st International Symposium on Logic-Based Program Synthesis and Transformation (LOPSTR 2021) [arXiv:2108.13365](https://arxiv.org/abs/2108.13365)_" (to appear in formal proceedings)
 
 ## Features
 
