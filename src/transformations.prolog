@@ -226,7 +226,7 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
 %% prolog
 allowed_formulae(before,[instant,dinterval,ndinterval],[instant,dinterval,ndinterval]).
 allowed_formulae(meets,[dinterval,ndinterval],[dinterval,ndinterval]).
-allowed_formulae(overlaps,[instant,dinterval,ndinterval],[instant,dinterval,ndinterval]).
+allowed_formulae(overlaps,[dinterval,ndinterval],[dinterval,ndinterval]).
 allowed_formulae(finishes,[instant,dinterval,ndinterval],[dinterval,ndinterval]).
 allowed_formulae(starts,[instant,dinterval,ndinterval],[dinterval,ndinterval]).
 allowed_formulae(equals,[dinterval,ndinterval],[dinterval,ndinterval]).
