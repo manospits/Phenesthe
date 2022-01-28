@@ -239,8 +239,8 @@ transform_ndinterval_formula_internal(Formula, Allowed, OtherVars, TransformedFo
 
 
 transform_ndinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
-    Formula=..[Relation, L, R],!,
-    allowed_formulae(Relation, AllowedL, AllowedR),
+    Formula=..[Relation, L, R],
+    allowed_formulae(Relation, AllowedL, AllowedR),!,
     term_variables([L,PheVars],LPheVars),
     term_variables([R,PheVars],RPheVars),
     transform_ndinterval_formula_internal(L, AllowedL, RPheVars, LTransformed, LTIL, LType),
