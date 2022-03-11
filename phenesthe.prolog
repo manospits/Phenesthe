@@ -41,6 +41,7 @@
 
 :-['./src/operators.prolog'].
 :-['./src/utilities.prolog'].
+:-['./src/filters.prolog'].
 :-['./src/transformations.prolog'].
 :-['./src/temporal_operators.prolog'].
 :-['./src/temporal_relations.prolog'].
