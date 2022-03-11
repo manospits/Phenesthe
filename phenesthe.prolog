@@ -37,17 +37,19 @@
           level/2.
 
 :-multifile input_phenomenon/2.
+:-discontiguous atemporal_preprocess/3.
 
 :-['./src/operators.prolog'].
 :-['./src/utilities.prolog'].
 :-['./src/transformations.prolog'].
 :-['./src/temporal_operators.prolog'].
 :-['./src/temporal_relations.prolog'].
-:-['./src/fstream_processing.prolog'].
+:-['./src/stream_processing.prolog'].
 :-['./src/multithreading.prolog'].
 
 % Multithreading is by default on.
 :-phe_setval(multithreading,1).
+:-phe_setval(preprocessing,0).
 
 %Definitions loading/pre-processing/storing
 term_expansion(input_phenomenon(Phenomenon,Type),input_phenomenon(Phenomenon,Type)).
