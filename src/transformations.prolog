@@ -136,6 +136,16 @@ transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     transform_dinterval_formula(R,LPheVars,Rt,RIL),
     tset_computation_formula(OP,Lt,Rt,LIL,RIL,IL,PheVars,ProcessedFormula).
 
+transform_dinterval_formula(filter(Formula, Operation), PheVars, ProcessedFormula, IL):-
+    transform_dinterval_formula(Formula, PheVars, DPFormula, PIL),
+    term_variables(DPFormula,PFVars),
+    variable_list_diff(PFVars, [PIL|PheVars], PFVarsUnrelated),
+    ProcessedFormula=(
+        setof_empty(PIL,PFVarsUnrelated^DPFormula,ZIL),
+        merge_disjoint_interval_lists(ZIL,ILNF),
+        apply_filter(Operation,ILNF,IL)
+    ).
+
 transform_dinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     phenomenon_type(Formula,state,user),
     ProcessedFormula=(state_intervals(Formula,IL)).
