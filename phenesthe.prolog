@@ -102,6 +102,11 @@ find_dependencies(Condition,D):-
     member(OP,[start,end,tnot]),!,
     find_dependencies(StateExpr,D).
 
+% filter op
+find_dependencies(Condition, D):-
+    Condition=..[filter,Expr,_],!,
+    find_dependecies(Expr,D).
+
 % reached a phenomenon
 find_dependencies(Condition,[Condition]):-
     phenomenon_type(Condition,_,_),!.
