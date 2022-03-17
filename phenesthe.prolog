@@ -105,7 +105,7 @@ find_dependencies(Condition,D):-
 % filter op
 find_dependencies(Condition, D):-
     Condition=..[filter,Expr,_],!,
-    find_dependecies(Expr,D).
+    find_dependencies(Expr,D).
 
 % reached a phenomenon
 find_dependencies(Condition,[Condition]):-
