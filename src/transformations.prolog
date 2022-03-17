@@ -146,6 +146,13 @@ transform_dinterval_formula(filter(Formula, Operation), PheVars, ProcessedFormul
         apply_filter(Operation,ILNF,IL)
     ).
 
+transform_dinterval_formula(aand(L,R), PheVars, ProcessedFormula, IL):-
+    term_variables([R,PheVars],RPheVars),
+    transform_dinterval_formula(L,RPheVars,LAt,IL),
+    ProcessedFormula=(
+        LAt,R
+    ).
+
 transform_dinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     phenomenon_type(Formula,state,user),
     ProcessedFormula=(state_intervals(Formula,IL)).
@@ -257,6 +264,14 @@ transform_ndinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     transform_ndinterval_formula_internal(R, AllowedR, LPheVars, RTransformed, RTIL, RType),
     formulae_ints_type(LType,RType,FType),
     relation_intervals_formula(Relation, FType, LType, RType, LTransformed, RTransformed, LTIL, RTIL, IL, PheVars, ProcessedFormula).
+
+
+transform_ndinterval_formula(aand(L,R), PheVars, ProcessedFormula, IL):-
+    term_variables([R,PheVars],RPheVars),
+    transform_ndinterval_formula(L,RPheVars,LAt,IL),
+    ProcessedFormula=(
+        LAt,R
+    ).
 
 transform_ndinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     phenomenon_type(Formula,dynamic_phenomenon,user),
