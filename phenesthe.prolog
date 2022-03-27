@@ -51,7 +51,7 @@
 :-['./src/multithreading.prolog'].
 
 % Multithreading is by default on.
-:-phe_setval(multithreading,0).
+:-phe_setval(multithreading,1).
 :-phe_setval(preprocessing,0).
 
 %Definitions loading/pre-processing/storing
