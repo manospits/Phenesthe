@@ -44,6 +44,9 @@ state_phenomenon possess(Person, Object) :=
 state_phenomenon happy(Person) :=
     gain(Person) ~> loss(Person).
 
+state_phenomenon keep_dropping(Person) :=
+    drop(Person, _Object) @ 4.
+
 state_phenomenon sad(Person) :=
     loss(Person) ~> gain(Person).
 

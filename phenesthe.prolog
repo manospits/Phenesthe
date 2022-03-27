@@ -32,6 +32,8 @@
           dynamic_phenomenon_intervals/2,
           dynamic_phenomenon_intervals_internal/2,
           retained_starting_formula/4,
+          retained_iteration_formula_points/4,
+          retained_iteration_formula_intervals/4,
           retained_tset_formula_intervals/5,
           retained_relation_formula_temp_info/5,
           level/2.
@@ -49,7 +51,7 @@
 :-['./src/multithreading.prolog'].
 
 % Multithreading is by default on.
-:-phe_setval(multithreading,1).
+:-phe_setval(multithreading,0).
 :-phe_setval(preprocessing,0).
 
 %Definitions loading/pre-processing/storing
@@ -188,6 +190,8 @@ discard_redundant(Tqmw,Tqmws):-
         retract(input_dynamic_phenomenon_interval(X,[Ts,Te]))),
     %retract old retained information
     retractall(retained_starting_formula(_,_,_,Tqmws)),
+    retractall(retained_iteration_formula_points(_,_,_,Tqmws)),
+    retractall(retained_iteration_formula_intervals(_,_,_,Tqmws)),
     retractall(retained_tset_formula_intervals(_,_,_,Tqmws,_)),
     retractall(retained_relation_formula_temp_info(_,_,_,Tqmws,_)).
 

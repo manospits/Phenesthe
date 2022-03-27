@@ -10,6 +10,44 @@ compute_maximal_intervals([(_,1,_)|SE],(Ts,y),R):-
 compute_maximal_intervals([(_,0,_)|SE],(_,n),R):-
     compute_maximal_intervals(SE,(_,n),R).
 
+%iteration operator
+compute_iteration_intervals([],_,[],[]):-!.
+compute_iteration_intervals([A|R],D,IL,TR):-
+    compute_iteration_intervals(R,D,A,A,IL,TR).
+
+compute_iteration_intervals([A|R],D,Prev,Start,Z,TR):-
+    Diff is A-Prev,
+    Diff > D,
+    (
+        (
+            Prev > Start,!,
+            Z=[[Start,Prev]|IL]
+        )
+        ;
+        (
+            Prev = Start,
+            Z=IL
+        )
+    ),
+    compute_iteration_intervals(R,D,A,A,IL,TR).
+
+compute_iteration_intervals([A|R],D,Prev,Start,IL,TR):-
+    Diff is A-Prev,
+    Diff =< D,!,
+    (
+        (
+            R=[],
+            IL=[[Start,A]],
+	        TR=[]
+        )
+        ;
+        (
+            R\=[],
+            compute_iteration_intervals(R,D,A,Start,IL,TR)
+        )
+    ).
+
+compute_iteration_intervals([],_,Prev,_,[],[Prev]).
 
 %single scan temporal union
 compute_union_intervals([],_,_,_,[]).

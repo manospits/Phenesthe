@@ -1,4 +1,4 @@
-:-begin_tests(events).
+:-begin_tests(dynamic_temporal_phenomena).
 :-['../../phenesthe.prolog'].
 :-['../definitions.prolog'].
 :-['./narrative.prolog'].

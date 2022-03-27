@@ -200,6 +200,12 @@ splice_interval_sets([],[A|B],[A|B]).
 splice_interval_sets([[ATS,T]|_],[[T,BTE]|IL],[[ATS,BTE]|IL]).
 splice_interval_sets([[ATS,ATE]|_],[[BTS,BTE]|IL],[[ATS,ATE],[BTS,BTE]|IL]):-ATE\=BTS.
 
+splice_interval_sets_drop([_A|_B],[],[]).
+splice_interval_sets_drop([],[A|B],[A|B]).
+splice_interval_sets_drop([[ATS,T]|_],[[T,BTE]|IL],[[ATS,BTE]|IL]).
+splice_interval_sets_drop([[ATS,ATE]|_],[[BTS,BTE]|IL],[[ATS,ATE],[BTS,BTE]|IL]):-ATE\=BTS.
+
+
 
 %returns the last ending interval(s) with an instant 
 %not equal to inf or unk, plus all the intervals that end with an
