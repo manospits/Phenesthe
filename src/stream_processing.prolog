@@ -96,7 +96,7 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
     count_input(IEi,ISi,IDi),
     count_results((Ea,Ei),(Sa,Si),(Da,Di)),
-    count_retained(MrOPRetained,TSetOpRetained,TRelRetained),
+    count_retained(MrOPRetained,ItOPRetainedP,ItOPRetainedI,TSetOpRetained,TRelRetained),
     log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)),
     print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),MrOPRetained,ItOPRetainedP,ItOPRetainedI,TSetOpRetained,TRelRetained),
     print_results(RFd,QueryTime,Window),
