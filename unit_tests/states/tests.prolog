@@ -79,4 +79,4 @@ test(case11):-
 test(case12):-
     findall(L,state_intervals(hungry_and_angry(bob),L),[[[6,7],[9,10]]]).
 
-:-end_tests(events).
+:-end_tests(states).

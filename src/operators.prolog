@@ -21,9 +21,10 @@
 :-op(1036,xfy,aand).
 :-op(1035,xfy,or).
 :-op(1034,xfy,and).
-:-op(1033,fy,tnot).
+:-op(1033,xfy,in).
+:-op(1032,fy,tnot).
 
-op_list([aand,tnot,and,or,
+op_list([aand,tnot,and,or,in,
            @,~>,union,intersection,complement,
            before,overlaps,meets,contains,starts,finishes,equals]).
 

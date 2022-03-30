@@ -83,4 +83,4 @@ test(case14):-
     findall(L,dynamic_phenomenon_intervals(ate_ends_hungry(alice),L),[[[1,14]]]),
     findall(L,dynamic_phenomenon_intervals(ate_ends_hungry(bob),L),[]).
 
-:-end_tests(events).
+:-end_tests(dynamic_temporal_phenomena).

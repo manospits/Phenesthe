@@ -74,6 +74,26 @@ transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
         member(T,InstantList)
     ).
 
+% in
+transform_instant_formula(in(L,R), PheVars, ProcessedFormula, T):-!,
+    term_variables([PheVars,L],LPheVars),
+    term_variables([PheVars,R],RPheVars),
+    transform_instant_formula(L, RPheVars, Lt, Ti),
+    transform_dinterval_formula(R, LPheVars, Rt, RIL),
+    term_variables(Lt, LFormulaVars),
+    term_variables(Rt, RFormulaVars),
+    variable_list_diff(LFormulaVars,[Ti|PheVars],LVarsUnrelated),
+    variable_list_diff(RFormulaVars,[RIL|PheVars],RVarsUnrelated),
+    ProcessedFormula=(
+        %compute all instants of left formula
+        setof_empty(Ti,LVarsUnrelated^Lt,TiL),
+        %compute intervals of right formula
+        setof_empty(RIL,RVarsUnrelated^Rt,RILists),
+        merge_disjoint_interval_lists(RILists,RILmerged),
+        compute_instants_in_intervals(TiL,RILmerged,IL),
+        member(T,IL)
+    ).
+
 %input event
 transform_instant_formula(Formula, _PheVars, ProcessedFormula, T):-
     phenomenon_type(Formula,event,input),!,

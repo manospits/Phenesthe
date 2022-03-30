@@ -45,6 +45,7 @@
 :-['./src/utilities.prolog'].
 :-['./src/filters.prolog'].
 :-['./src/transformations.prolog'].
+:-['./src/temporal_connectives.prolog'].
 :-['./src/temporal_operators.prolog'].
 :-['./src/temporal_relations.prolog'].
 :-['./src/stream_processing.prolog'].
