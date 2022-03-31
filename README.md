@@ -156,6 +156,7 @@ temporalExpression = instantExpression | intervalExpression;
 
 instantExpression = "("instantExpresstion")"| "tnot" instantExpression
                     | instantExpression ("and"|"or") instantExpression
+                    | instantExpression "in" intervalOperation
                     | startEndOp | event;
 
 intervalExpression = intervalOperation | intervalRelation;
