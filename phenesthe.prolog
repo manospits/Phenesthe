@@ -220,6 +220,8 @@ process_event(Phenomenon):-
     (ProcessedFormula,
      ground(Phenomenon),
      InstantList\=[],
+     %thread_self(ID),
+     %format('Thread ~w asserts ~w\n',[ID,event_instants(Phenomenon,InstantList)]),
      assert_if_not_exists(event_instants(Phenomenon,InstantList))
     ),_),!.
 
@@ -230,7 +232,7 @@ process_state(Phenomenon):-
         (
         ProcessedFormula,
         IL\=[],
-        assertz(state_intervals(Phenomenon,IL))
+        assert_if_not_exists(state_intervals(Phenomenon,IL))
         )
     ,_).
 
@@ -241,7 +243,7 @@ process_dynamic_phenomenon(Phenomenon):-
         (
         ProcessedFormula,
         IL\=[],
-        assertz(dynamic_phenomenon_intervals_internal(Phenomenon,IL))
+        assert_if_not_exists(dynamic_phenomenon_intervals_internal(Phenomenon,IL))
         )
     ,_).
 

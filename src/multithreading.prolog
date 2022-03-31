@@ -24,7 +24,7 @@ feed_goals_with_dependencies(WorkerCount, [], FinishedGoals, TotalJobCount, Queu
     !,length(FinishedGoals, FinishedGoalsCount),
     (
         (
-         FinishedGoalsCount<TotalJobCount,
+         FinishedGoalsCount<TotalJobCount,!,
          thread_get_message(Done, done(_Id, _Vars, Phenomenon)),
          feed_goals_with_dependencies(WorkerCount, [], [Phenomenon|FinishedGoals], TotalJobCount, Queue, Done, Cleanup)
         )
@@ -35,6 +35,7 @@ feed_goals_with_dependencies(WorkerCount, [], FinishedGoals, TotalJobCount, Queu
             thread_send_message(Queue, done))
         )
     ).
+
 feed_goals_with_dependencies(WorkerCount, AvailableGoals, FinishedGoals, TotalJobCount,  Queue, Done, Cleanup):-
     get_ready_to_start_goals(AvailableGoals, FinishedGoals, ReadyGoals, RemainingGoals),
     submit_query_goals(ReadyGoals, 1, Queue, _VarList),
@@ -66,7 +67,7 @@ create_query_workers(N, Queue, Done, [Id|Ids], Options) :-
 create_query_workers(_, _, _, [], _).
 
 
-submit_query_goals([], _,  _, []).
+submit_query_goals([], _,  _, []):-!.
 submit_query_goals([H|T], I, Queue, [Vars|VT]) :-
     term_variables(H, Vars),
     thread_send_message(Queue, goal(I, H, Vars)),
@@ -74,22 +75,22 @@ submit_query_goals([H|T], I, Queue, [Vars|VT]) :-
     submit_query_goals(T, I2, Queue, VT).
 
 
-get_ready_to_start_goals([], _, [], []).
+get_ready_to_start_goals([], _, [], []):-!.
 get_ready_to_start_goals([Goal|OtherGoals], FinishedGoals, ReadyGoals, RemainingGoals):-
     Goal=process_phenomenon(Phenomenon),
     dependencies(Phenomenon, DependencyList),
     get_ready_to_start_goals(OtherGoals, FinishedGoals, ReadyGoals1, RemainingGoals1),
-    (   all_dependencies_in_finished_goals(DependencyList, FinishedGoals) 
+    (   all_dependencies_in_finished_goals(DependencyList, FinishedGoals)
     -> (    ReadyGoals = [Goal|ReadyGoals1], RemainingGoals = RemainingGoals1)
     ; (ReadyGoals=ReadyGoals1, RemainingGoals=[Goal|RemainingGoals1])).
 
 
 all_dependencies_in_finished_goals([],_).
 all_dependencies_in_finished_goals([A|A1],B):-
-    (   phenomenon_type(A,_,user) 
+    (   phenomenon_type(A,_,user)
     ->  (A=..[PhenomenonName|Args],
          length(Args,N),
-         member((PhenomenonName,N),B)
+         member((PhenomenonName,N),B),!
         )
     ; true
     ), all_dependencies_in_finished_goals(A1,B).

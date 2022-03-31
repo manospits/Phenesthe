@@ -34,6 +34,9 @@ event_phenomenon no_action(Person) :=
 event_phenomenon ate_and_dropped(Person) :=
     ate(Person,X) and drop(Person,X).
 
+event_phenomenon ate_while_happy(Person,X):=
+    ate(Person,X) in happy(Person).
+
 %a person posses something when he picks it up
 %stops possesing it if it drops it
 state_phenomenon possess(Person, Object) :=

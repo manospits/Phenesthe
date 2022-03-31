@@ -467,7 +467,7 @@ retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
 retain_starting_formula([[Ts,Te]|_R], StartingFormula, FormulaId, Tcrit):-
     Te > Tcrit,
     Ts =< Tcrit,
-    assertz(retained_starting_formula((StartingFormula),Ts,FormulaId,Tcrit)).
+    assert_if_not_exists(retained_starting_formula((StartingFormula),Ts,FormulaId,Tcrit)).
 
 get_retained_iteration_formula_intervals(IterationFormula,A,FormulaId,Tcrit):-
     retained_iteration_formula_intervals((IterationFormula),A,FormulaId,Tcrit).
@@ -504,7 +504,7 @@ retain_tset_formula(IL,OP,PheVars,FormulaId,Tcrit):-
     retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR),!.
 retain_tset_formula(IL,OP,PheVars,FormulaId,Tcrit):-
     retain_tset_formula_intervals(IL, ILR, Tcrit),
-    assertz(retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR)).
+    assert_if_not_exists(retained_tset_formula_intervals(OP,PheVars,FormulaId,Tcrit,ILR)).
 
 retain_tset_formula_intervals([], [], _).
 retain_tset_formula_intervals([[Ts,Te]|ILTail], ILR, Tcrit):-
@@ -525,5 +525,5 @@ retain_relation_formula_temp_info(_,_,_,_,[]):-!.
 retain_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP):-
     retained_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP),!.
 retain_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP):-
-    assertz(retained_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP)).
+    assert_if_not_exists(retained_relation_formula_temp_info(Relation,PheVars,FormulaId,Tcrit,AP)).
 

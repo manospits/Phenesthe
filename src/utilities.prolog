@@ -308,9 +308,7 @@ create_window_instants(StartTime,EndTime,[StartTime|R]):-
 
 
 assert_if_not_exists(X):-
-    \+X,assertz(X).
-assert_if_not_exists(X):-
-    X.
+    X-> true ; assertz(X).
 
 merge_temporal_information_lists(instant, InputList, OutputList):-
     merge_instant_lists(InputList,OutputList).
