@@ -85,6 +85,11 @@ preprocess_phenomena_definitions:-
         preprocess_phenomenon_definition(X,PType),
         compute_topological_place(X,P),
         assertz(level(X,P))
+    ),_),
+    findall(_,(
+        phenomenon_type(X,_,user),
+        \+(phenomenon_transformed_conditions(X,_C,_T)),
+        format('ERROR: Definition transformation of phenomenon ~w failed',[X])
     ),_).
 
 dependencies(X,[]):-
