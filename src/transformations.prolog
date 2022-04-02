@@ -40,7 +40,8 @@ transform_formula2(dynamic_phenomenon,Formula,Variables,TransformedFormula,Inter
 %% Takes a formula of Phi^. and transforms it accordingly for
 %% prolog
 transform_instant_formula(aand(L,R), PheVars, ProcessedFormula, T):-!,
-    transform_instant_formula(L, PheVars, LAt,  T),
+    term_variables([PheVars,R],RPheVars),
+    transform_instant_formula(L, RPheVars, LAt,  T),
     ProcessedFormula=(
         LAt,R
     ).
