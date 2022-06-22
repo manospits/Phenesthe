@@ -48,10 +48,10 @@ compute_before_intervals2(d,[A|RL],B,RL,[TSA,TEB],A):-
         (
          RL=[A2|_],
          temporal_information(A2,_TSA2,TEA2,_),
-         geq(TEA2,TSB)
+         geq(TEA2,TSB),!
         );
         (
-         RL=[]
+         RL=[],!
         )
     ).
 
@@ -713,4 +713,4 @@ compute_contains_intervals2(nd,[A|RL],B, [A|RL], CORS, CORS,  [], _):-
     TSBM1 is TSB-1,
     gt(TSA,TSBM1),!.
 
-compute_contains_intervals2(nd,[],[_|_], [], CORS, CORS, [], _).
+compute_contains_intervals2(nd,[],_, [], CORS, CORS, [], _).
