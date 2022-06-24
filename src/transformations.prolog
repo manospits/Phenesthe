@@ -1,3 +1,9 @@
+% Author: Manolis Pitsikalis
+%
+% Transform user formulae into internal 
+% representation
+%
+
 %%
 %%------------------------ Phi handling --------------------------
 %%

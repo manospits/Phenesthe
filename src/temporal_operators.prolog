@@ -1,3 +1,8 @@
+% Author: Manolis Pitsikalis
+%
+% Temporal operations 
+% maximal range, iteration, temp. union/intersection/complement
+
 %maximal interval cmputation from se list
 compute_maximal_intervals([],(_,n),[]).
 compute_maximal_intervals([],(Ts,y),[[Ts,inf]]).

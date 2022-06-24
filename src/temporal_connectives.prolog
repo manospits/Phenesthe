@@ -1,4 +1,9 @@
+% Author: Manolis Pitsikalis
+%
+% - Connectives operations -
+%
 
+%find points included in an interval
 compute_instants_in_intervals([],_,[]):-!.
 compute_instants_in_intervals(_,[],[]):-!.
 compute_instants_in_intervals([A|AR],[[TS,TE]|BR],[A|TL]):-

@@ -1,3 +1,8 @@
+% Author: Manolis Pitsikalis
+%
+% - Operators of the language -
+%
+
 :-op(1149,fx,event_phenomenon).
 :-op(1149,fx,state_phenomenon).
 :-op(1149,fx,dynamic_phenomenon).

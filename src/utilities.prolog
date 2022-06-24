@@ -1,5 +1,11 @@
+% Author: Manolis Pitsikalis
+%
+% Utilities used in different parts
+%
 :-dynamic val/2.
 
+% merge two interval lists into one that has instants and information
+% regarding if that instant is a start or an end of an interval
 merge_ilse([],[],[]).
 merge_ilse([],[[B1,B2]|BL],[(B1,(1:[b],0:[]))|RIL]):-
     merge_ilse([],[[B2]|BL],RIL).
