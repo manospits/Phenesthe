@@ -102,11 +102,13 @@ compute_intersection_intervals([(T,_:A,_:B)|R],AIN,BIN,_,IL):-
 
 %single scan temporal complement
 compute_complement_intervals([],_,_,_,[]).
-compute_complement_intervals([(TE,_:A,_:B)|R],1,0,TS,[[TS,TE]|IL]):-
+compute_complement_intervals([(TE,_:A,_:B)|R],1,0,TS,RES):-
     (
         %case interval of a ends
         member(a,B),!,
         check_in(b,A,BIN),
+        TE1=TE,
+        RES=[[TS,TE1]|IL],
         compute_complement_intervals(R,0,BIN,_,IL)
     );
     (
@@ -114,6 +116,8 @@ compute_complement_intervals([(TE,_:A,_:B)|R],1,0,TS,[[TS,TE]|IL]):-
         member(b,A),
         check_in(a,B,AIN),
         neg(AIN,NAIN),
+        TE1 is TE-1,
+        (TS<TE1 -> RES = [[TS,TE1]|IL] ; RES=IL), 
         compute_complement_intervals(R,NAIN,1,_,IL)
     ).
 
