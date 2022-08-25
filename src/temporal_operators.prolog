@@ -108,7 +108,7 @@ compute_complement_intervals([(TE,_:A,_:B)|R],1,0,TS,RES):-
         member(a,B),!,
         check_in(b,A,BIN),
         TE1=TE,
-        RES=[[TS,TE1]|IL],
+        (TS<TE -> RES=[[TS,TE1]|IL] ; RES=IL),
         compute_complement_intervals(R,0,BIN,_,IL)
     );
     (
@@ -123,18 +123,18 @@ compute_complement_intervals([(TE,_:A,_:B)|R],1,0,TS,RES):-
 
 compute_complement_intervals([(T,_:A,_:B)|R],AIN,BIN,To,IL):-
     \+((AIN=1,BIN=0)),
-    check_in(a,A,AAIN),
-    check_in(b,A,ABIN),
-    check_in(a,B,RAIN),
-    check_in(b,B,RBIN),
-    neg(RAIN,NeRAIN),
-    neg(RBIN,NeRBIN),
+    check_in(a,A,AAIN), % start of interval of first list at t
+    check_in(b,A,ABIN), % start of interval of second list at t
+    check_in(a,B,RAIN), % end of interval of first list at t 
+    check_in(b,B,RBIN), % end of interval of second list at t
+    neg(RAIN,NeRAIN), % not (end of interval of first list at t)
+    neg(RBIN,NeRBIN), % not (end of interval of second list at t)
     %writeln((NAIN is (AIN \/ AAIN) /\ NeRAIN)),
-    NAIN is (AIN \/ AAIN) /\ NeRAIN,
-    NBIN is (BIN \/ ABIN) /\ NeRBIN,
+    NAIN is (AIN \/ AAIN) /\ NeRAIN, % interval of a already opened or opened now, and did not close now
+    NBIN is (BIN \/ ABIN) /\ NeRBIN, % interval of b already opened or opened now, and did not close now
     ((
      NAIN=1,!,
-     compute_complement_intervals(R,NAIN,NBIN,T,IL)
+     ((ABIN=0,RBIN=0) -> compute_complement_intervals(R,NAIN,NBIN,T,IL); (T1 is T+1,compute_complement_intervals(R,NAIN,NBIN,T1,IL))) 
     );
     (
      NAIN\=1,

@@ -71,7 +71,7 @@ test(case9):-
 
 test(case10):-
     assertion(findall(L,state_intervals(happy_without_money(bob),L),[])),
-    assertion(findall(L,state_intervals(happy_without_money(alice),L),[[[9,inf]]])).
+    assertion(findall(L,state_intervals(happy_without_money(alice),L),[[[10,inf]]])).
 
 test(case11):-
     assertion(findall(L,state_intervals(can_eat(bob),L),[[[6,inf]]])).
