@@ -64,7 +64,7 @@ query_worker(Queue, Done) :-
     ->  (   Goal = process_phenomenon(Phenomenon),
             Phenomenon=..[PhenomenonName|Args],
             length(Args,N),
-            Goal
+            catch(Goal, Caught,format("Caught: ~q~n",[Caught]))
         ->  thread_send_message(Done, done(Id, Vars, (PhenomenonName,N))),
             query_worker(Queue, Done)
         )
