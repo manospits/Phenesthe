@@ -31,6 +31,6 @@
 
 op_list([aand,tnot,and,or,in,
            @,~>,union,intersection,complement,
-           before,overlaps,meets,contains,starts,finishes,equals]).
+           before,overlaps,meets,contains,starts,finishes,equals,filter]).
 
 instant_op_list([and,or,tnot,start,end]).
