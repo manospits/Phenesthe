@@ -154,9 +154,11 @@ transform_dinterval_formula(~>(L,R),PheVars, ProcessedFormula, IL):-!,
     transform_instant_formula(R, LPheVars, Rt, LTe),
     maximal_interval_computation_formula(Lt, Rt, LTs, LTe, IL, PheVars, ProcessedFormula).
 
-transform_dinterval_formula(@(L,D), PheVars, ProcessedFormula, IL):-!,
+transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
+    Formula=..[OP,L,D],
+    member(OP,[<@,>=@,=@]),!,
     transform_instant_formula(L, PheVars, Lt, LTs),
-    iteration_interval_computation_formula(Lt, D, LTs, IL, PheVars, ProcessedFormula).
+    iteration_interval_computation_formula(OP,Lt, D, LTs, IL, PheVars, ProcessedFormula).
 
 transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     Formula=..[OP,L,R],
@@ -263,7 +265,8 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
-iteration_interval_computation_formula(Formula, D, Ts, IL, PheVars, ProcessedFormula):-
+iteration_interval_computation_formula(OP,Formula, D, Ts, IL, PheVars, ProcessedFormula):-
+    OP='<@',
     phe_getval(formula_id,FormulaId),
     term_variables(Formula,SVars),
     variable_list_diff(SVars, [Ts|PheVars], SVarsUnrelated),

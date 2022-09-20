@@ -89,7 +89,7 @@ preprocess_phenomena_definitions:-
     findall(_,(
         phenomenon_type(X,_,user),
         \+(phenomenon_transformed_conditions(X,_C,_T)),
-        format('ERROR: Definition transformation of phenomenon ~w failed',[X])
+        format('ERROR: Definition transformation of phenomenon ~w failed.\n',[X])
     ),_).
 
 dependencies(X,[]):-

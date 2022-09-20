@@ -32,7 +32,7 @@
 :-op(1032,fy,tnot).
 
 op_list([aand,tnot,and,or,in,
-<@,>=@,=@,~>,union,intersection,complement,
-           before,overlaps,meets,contains,starts,finishes,equals]).
+        <@,>=@,=@,~>,union,intersection,complement,
+        before,overlaps,meets,contains,starts,finishes,equals,filter]).
 
 instant_op_list([and,or,tnot,start,end]).
