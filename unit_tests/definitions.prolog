@@ -5,6 +5,7 @@ input_phenomenon(pickup(_Person,_Object),event).
 input_phenomenon(ate(_Person,_Food),event).
 input_phenomenon(hunger(_Person),event).
 input_phenomenon(angry(_Person),state).
+input_phenomenon(stares(_PersonA,_PersonB),event).
 
 %gain when picking up sth and not dropping sth
 event_phenomenon gain(Person) :=
@@ -49,6 +50,12 @@ state_phenomenon happy(Person) :=
 
 state_phenomenon keep_dropping(Person) :=
     drop(Person, _Object) <@ 4.
+
+state_phenomenon regular_stare(PersonA,PersonB) :=
+    stares(PersonA,PersonB) =@ 4.
+
+state_phenomenon not_so_regular_stare(PersonA,PersonB) :=
+    stares(PersonA,PersonB) >=@ 4.
 
 state_phenomenon sad(Person) :=
     loss(Person) ~> gain(Person).

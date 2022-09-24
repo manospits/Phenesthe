@@ -201,11 +201,13 @@ split_on_t(Tqmw,[[TS,TE]|TailLIL],TailLILbeforeTqmw,[[TS,TE]|TailLILafterTqmw]):
     TS>=Tqmw,
     split_on_t(Tqmw,TailLIL,TailLILbeforeTqmw,TailLILafterTqmw).
 
+splice_interval_sets([],[],[]).
 splice_interval_sets([A|B],[],[A|B]).
 splice_interval_sets([],[A|B],[A|B]).
 splice_interval_sets([[ATS,T]|_],[[T,BTE]|IL],[[ATS,BTE]|IL]).
 splice_interval_sets([[ATS,ATE]|_],[[BTS,BTE]|IL],[[ATS,ATE],[BTS,BTE]|IL]):-ATE\=BTS.
 
+splice_interval_sets_drop([],[],[]).
 splice_interval_sets_drop([_A|_B],[],[]).
 splice_interval_sets_drop([],[A|B],[A|B]).
 splice_interval_sets_drop([[ATS,T]|_],[[T,BTE]|IL],[[ATS,BTE]|IL]).
