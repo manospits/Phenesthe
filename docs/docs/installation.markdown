@@ -5,7 +5,7 @@ nav_order: 2
 permalink: /installation/
 ---
 
-### Installation
+## Installation
 
 Running _Phenesthe_ requires a prolog installation. Specifically it has been tested under [SWI-Prolog](www.swi-prolog.org) 7.6.4.
 You can download the latest version of _Phenesthe_ using the command below:
