@@ -8,7 +8,7 @@ nav_order: 1
 ## Architecture
 An overview of the architecture of phenesthe is presented in the figure below.
 
-![Phenesthe architecture](/assets/img/phenesthe_architecture.png "Phenesthe architecture")
+![Phenesthe architecture](phenesthe_architecture.png "Phenesthe architecture")
 
 ### Input information
 The input is of two kinds; static and dynamic information.
@@ -25,7 +25,7 @@ When the transformation and the computation of the evaluation order of the user 
 ### Dependency aware parallelisation
 User defined phenomena can be processed in a sequential manner by following the evaluation order produced by the topological sort of the directed acyclic graph they form. An example dependency graph is shown below for the YSP example.
 
-![YSP dependency graph](/assets/img/ysp_dep.png "YSP dependency graph")
+![YSP dependency graph](ysp_dep.png "YSP dependency graph")
 
 
 However, if possible they can also be executed in parallel. In Phenesthe we implement dependency-aware parallelisation whereby phenomena definitions that have no pending dependencies are processed in parallel via a Master-Worker paradigm. Here, the master checks for phenomena definitions that do not have any unmet dependencies and inserts them in the processing queue. Workers remove phenomena definitions from the processing queue, process them, and notify the master as soon as they complete. This process goes on until all the user defined phenomena are processed. 
