@@ -62,8 +62,8 @@ Where the arguments denote the following:
 
 Stream processing here will stop when the pipe is closed (by force) or an EOF is read.
 
-### Complete example on a file stream
-Therefore to use _Phenesthe_ for stream processing the following steps must be taken.
+### Example on a file stream
+In order to use _Phenesthe_ for stream processing the following steps must be taken.
 
 1. **Initial setup:** load _Phenesthe_, definitions of phenomena and any static information.
 ```prolog
@@ -86,7 +86,7 @@ Therefore to use _Phenesthe_ for stream processing the following steps must be t
 queries_on_fstream('BREST_phenesthe.input','logs/log_1_3600.csv','results/results_1_3600.out',1443650401,1444255201,3600,3600).
 ```
 
-### Pipe stream
+### Example on a pipe stream
 
 1. **Initialisation & Preprocessing:** Steps 1 and 2 from above remain the same.
 2. **Pipe:** Creation of the stream (in shell)
