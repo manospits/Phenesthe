@@ -266,7 +266,6 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 iteration_interval_computation_formula(OP,Formula, D, Ts, IL, PheVars, ProcessedFormula):-
-    OP='<@',
     phe_getval(formula_id,FormulaId),
     term_variables(Formula,SVars),
     variable_list_diff(SVars, [Ts|PheVars], SVarsUnrelated),
@@ -285,10 +284,10 @@ iteration_interval_computation_formula(OP,Formula, D, Ts, IL, PheVars, Processed
           )
         ),
         ord_union(StartingPointsNew,StartingPointsRetained,StartingPoints),
-        compute_iteration_intervals(StartingPoints,D,IIL,LastPoinToRetain),
+        compute_iteration_intervals(OP,StartingPoints,D,IIL,LastPoinToRetain),
         get_retained_iteration_formula_intervals(SVarsRelated,RI,FormulaId,Tqmw),
         splice_interval_sets_drop(RI,IIL,IL),
-        retain_iteration_formula(IL, LastPoinToRetain, D, SVarsRelated, FormulaId, Tcrit)
+        retain_iteration_formula(OP,IL, LastPoinToRetain, D, SVarsRelated, FormulaId, Tcrit)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
@@ -485,19 +484,25 @@ get_retained_iteration_formula_intervals(IterationFormula,[],FormulaId,Tcrit):-
     \+(retained_iteration_formula_intervals((IterationFormula),_,FormulaId,Tcrit)).
 
 
-retain_iteration_formula([],[], _,_,_,_).
-retain_iteration_formula([], [A], D, _, _, Tcrit):-
+retain_iteration_formula(_,[],[], _,_,_,_).
+%no intervals only point A that doesn't matter
+retain_iteration_formula(OP, [], [A], D, _, _, Tcrit):-
     C is Tcrit+1-A,
-	\+((A =< Tcrit, D >= C)).
-retain_iteration_formula([], [A], D, IterationFormula, FormulaId, Tcrit):-
-	A =< Tcrit, C is Tcrit+1-A, D >= C,
+    (OP \= >=@ -> (\+((A =< Tcrit, D >= C)));(\+((A =< Tcrit)))).
+%no intervals but point A matters
+retain_iteration_formula(OP, [], [A], D, IterationFormula, FormulaId, Tcrit):-
+	A =< Tcrit, C is Tcrit+1-A, 
+    (OP \= >=@ -> (D >= C);(true)),
     assert_if_not_exists(retained_iteration_formula_points((IterationFormula),A,FormulaId,Tcrit)).
-retain_iteration_formula([[Ts,Te]|R], A, D, IterationFormula, FormulaId, Tcrit):-
+%intervals but current interval doesn't matter
+retain_iteration_formula(OP,[[Ts,Te]|R], A, D, IterationFormula, FormulaId, Tcrit):-
     C is Tcrit+1-Te,
-    \+((Ts =< Tcrit, D >= C)),
-    retain_iteration_formula(R, A, D, IterationFormula,FormulaId, Tcrit).
-retain_iteration_formula([[Ts,Te]|_R], _A, D, IterationFormula, FormulaId, Tcrit):-
-    Ts =< Tcrit, C is Tcrit+1-Te,D >= C,
+    (OP \= >=@ -> \+((Ts =< Tcrit, D >= C)) ; \+(Ts =< Tcrit)),
+    retain_iteration_formula(OP, R, A, D, IterationFormula,FormulaId, Tcrit).
+%intervals but current interval does matter
+retain_iteration_formula(OP, [[Ts,Te]|_R], _A, D, IterationFormula, FormulaId, Tcrit):-
+    Ts =< Tcrit, C is Tcrit+1-Te,
+    (OP \= >=@ -> (D >= C); (true)),
     assert_if_not_exists(retained_iteration_formula_intervals((IterationFormula),[[Ts,Te]],FormulaId,Tcrit)),
     Te =< Tcrit -> assert_if_not_exists(retained_iteration_formula_points((IterationFormula),Te,FormulaId,Tcrit)). 
 
