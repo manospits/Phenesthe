@@ -2,7 +2,7 @@
 layout: default
 title: Input & User Phenomena
 parent: Documentation
-nav_order: 4
+nav_order: 4.3
 ---
 ## Phenomena
 
