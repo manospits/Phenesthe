@@ -4,10 +4,10 @@ title: Getting Started
 nav_order: 2 
 permalink: /getting-started/
 ---
-### Getting Started
+## Getting Started
 In this section you will find the instructions for running a minimal example application of _Phenesthe_. For more complicated applications please read the documentation section.
  
-#### Running _Phenesthe_ on the included 'Alice & Bob' sample
+### Running _Phenesthe_ on the included 'Alice & Bob' sample
 
 The ``samples/alice_and_bob/`` folder includes an example usage of _Phenesthe_. The ``definitions.prolog`` contains definitions of temporal phenomena, the ``narrative.prolog`` contains the input phenomena i.e., the input  and ``run.prolog`` loads _Phenesthe_ and preprocesses the phenomena definitions.
 
