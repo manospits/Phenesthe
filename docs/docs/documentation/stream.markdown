@@ -98,4 +98,6 @@ cat BREST_phenesthe.input >> input_stream &
 ```prolog
 % Maritime example
 queries_on_stream('input_stream','logs/log_1_3600.csv','results/results_1_3600.out',3600,3600).
-`
+```
+
+---
