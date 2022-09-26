@@ -28,7 +28,7 @@ temporalExpression = instantExpression | intervalExpression ;
 instantExpression = "("instantExpresstion")"| "tnot" instantExpression
                     | instantExpression ("and"|"or") instantExpression
                     | instantExpression "in" intervalOperation
-                    | instantExpression ("@<"|"@>="|"@=") number
+                    | instantExpression ("@<"|"@>="|"@=") PosInteger
                     | instantExpression "aand" atemporalPrologExpression
                     | startEndOp | event; 
 
@@ -37,6 +37,7 @@ intervalExpression = intervalOperation | intervalRelation;
 intervalOperation = intervalOperation ("union"|"intersection"|"complement") intervalOperation 
                     | instantExpression "~>" instantExpression 
                     | intervalOperation "aand" atemporalPrologExpression
+                    | "filter("intervalOperation"," filter_option ")"
                     | "("intervalOperation")"| state; 
 
 intervalRelation = temporalExpression "before" temporalExpression
@@ -48,8 +49,10 @@ intervalRelation = temporalExpression "before" temporalExpression
                    | intervalExpression "equals" intervalExpression
                    | intervalRelation "aand" atemporalPrologExpression
                    |"("intervalRelation")" | dynamic;
+
+filter_option = ("less" | "greater" | equal")"("PosInteger")"
                    
-startEndOp ::= ("start"|"end")"("intervalOperation")";
+startEndOp = ("start"|"end")"("intervalOperation")";
 {% endhighlight %}
 
 
@@ -133,4 +136,5 @@ filter((filter((cooking(P,stove,steaks)),greater(120))),less(180)) before
 	 filter((filter((cooking(P,oven,steaks)),greater(480))),less(600))
 ```
 
+---
 

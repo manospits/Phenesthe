@@ -34,7 +34,7 @@ The input should be ordered via the '<' for instants and then for intervals firs
 
 Processing a file stream (a text file) is allowed via the following predicate:
 
-```
+```prolog
 queries_on_fstream(InputFile,LogFile,ResultsFile,Start,End,Step,Window)
 ```
 Where the arguments denote the following:
@@ -50,7 +50,7 @@ Phenesthe will start processing phenomena based on the start timestamp and it wi
 ### Stream (general) processing
 Currently stream processing in _Phenesthe_ is allowed via the use of named UNIX pipe streams. Pipes can be created via the use of the `mkfifo`  command. The predicate used for processing these pipe streams is the following:
 
-```
+```prolog
 queries_on_stream(PipeName,LogFile,ResultsFile,Step,Window)
 ```
 Where the arguments denote the following:
@@ -62,11 +62,11 @@ Where the arguments denote the following:
 
 Stream processing here will stop when the pipe is closed (by force) or an EOF is read.
 
-### Complete example
+### Complete example on a file stream
 Therefore to use _Phenesthe_ for stream processing the following steps must be taken.
 
 1. **Initial setup:** load _Phenesthe_, definitions of phenomena and any static information.
-```
+```prolog
 % Maritime example
 :-['../../phenesthe.prolog'].
 % load the maritime definitions
@@ -75,13 +75,27 @@ Therefore to use _Phenesthe_ for stream processing the following steps must be t
 :-['./vessel_types.prolog'].
 ```
 2. **Definitions preprocessing:** Here the definitions are transformed into prolog code and their dependencies and evaluation order is computed.
-```
+```prolog
 % Maritime example
 % preprocess phenomena definitions (transform them, find evaluation order, etc.)
 :-preprocess_phenomena_definitions.
 ```
 3. **Temporal querying:** Call the appropriate stream processing predicate as follows:
-```
+```prolog
 % Maritime example
 queries_on_fstream('BREST_phenesthe.input','logs/log_1_3600.csv','results/results_1_3600.out',1443650401,1444255201,3600,3600).
 ```
+
+### Pipe stream
+
+1. **Initialisation & Preprocessing:** Steps 1 and 2 from above remain the same.
+2. **Pipe:** Creation of the stream (in shell)
+```bash
+mkfifo input_stream
+cat BREST_phenesthe.input >> input_stream &
+```
+3. **Temporal querying:** Call the appropriate stream processing predicate as follows:
+```prolog
+% Maritime example
+queries_on_stream('input_stream','logs/log_1_3600.csv','results/results_1_3600.out',3600,3600).
+`
