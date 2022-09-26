@@ -31,6 +31,11 @@ plugins:
   - jekyll-feed
 
 
+defaults:
+  - scope:
+      path: "/assets/img"
+    values:
+      image: true
 
 logo: "/assets/img/logo.png"
 
