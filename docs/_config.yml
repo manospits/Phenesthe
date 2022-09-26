@@ -26,7 +26,7 @@ url: "" # the base hostname & protocol for your site, e.g. http://example.com
 github_username:  manospits
 
 # Build settings
-remote_theme: "just-the-docs"
+remote_theme: "just-the-docs/just-the-docs"
 plugins:
   - jekyll-feed
 
