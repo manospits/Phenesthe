@@ -14,7 +14,7 @@ Given an input stream of input phenomena _Phenesthe_ will produce the instants o
 - An engine that allows the recognition of the instants and intervals at which the user defined phenomena are true/hold
 
 ## Documentation
-Visit the docs page [Phenesthe docs](https://manospits.github.io/Phenesthe/ ). 
+Visit the docs [page](https://manospits.github.io/Phenesthe/ ). 
 
 ## Disclaimer
 
