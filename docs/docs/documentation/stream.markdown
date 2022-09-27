@@ -26,7 +26,7 @@ input_state_interval(state_name(arg_1,...,arg_n),[Ts,Te])
 ```
 input_dynamic_phenomenon_interval(dyn_temp_phe_name(arg_1,...,arg_n),[Ts,Te])
 ```
-`arg_1,...,arg_n` are atemporal values, while [Ts,Te] is a strict interval (i.e., Ts < Te) denoting the time period where arg_1,...,arg_n/n holds.
+`arg_1,...,arg_n` are atemporal values, while [Ts,Te] is a strict interval (i.e., Ts < Te) denoting the time period where dyn_temp_phe_name/n holds.
 
 The input should be ordered via the '<' for instants and then for intervals first on the starting times and then on the ending times.
 
