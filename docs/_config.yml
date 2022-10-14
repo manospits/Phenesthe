@@ -39,9 +39,10 @@ defaults:
 
 logo: "/assets/img/logo.png"
 
-aux_links:
-  "Phenesthe on GitHub":
-    - "//github.com/manospits/Phenesthe"
+nav_external_links:
+  - title: Phenesthe on GitHub
+    url: https://github.com/manospits/Phenesthe
+    hide_icon: false 
 
 # Exclude from processing.
 # The following items will not be processed, by default.
