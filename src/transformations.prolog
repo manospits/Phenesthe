@@ -241,8 +241,8 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
     phe_getval(formula_id,FormulaId),
     term_variables(StartingFormula,SVars),
     term_variables(EndingFormula,EVars),
-    variable_list_diff(SVars,[Ts|PheVars],SVarsUnrelated),
-    variable_list_diff(EVars,[Te|PheVars],EVarsUnrelated),
+    variable_list_diff(SVars,[Ts,PheVars|EVars],SVarsUnrelated),
+    variable_list_diff(EVars,[Te,PheVars|SVars],EVarsUnrelated),
     variable_list_diff(SVars,SVarsUnrelated,SVarsRelated),
     ProcessedFormula=(
         phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
