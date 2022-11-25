@@ -15,70 +15,138 @@ compute_maximal_intervals([(_,1,_)|SE],(Ts,y),R):-
 compute_maximal_intervals([(_,0,_)|SE],(_,n),R):-
     compute_maximal_intervals(SE,(_,n),R).
 
-%iteration operator
-compute_iteration_intervals(_,[],_,[],[]):-!.
-compute_iteration_intervals(OP,[A|R],D,IL,TR):-
-    compute_iteration_intervals(OP,R,D,A,A,IL,TR).
+%iteration operator (temporal constraints only)
+compute_iteration_intervals(OP,S,D,IL,TR):-
+    compute_iteration_intervals(OP,S,no_collection,D,IL,TR).
 
-compute_iteration_intervals(OP,[A|R],D,Prev,Start,Z,TR):-
-    Diff is A-Prev,
-    ( 
-        (
-            OP = <@,
-            Diff >= D
-        );
-        (
-            OP = =@,
-            Diff =\= D
-        );
-        (
-            OP = >=@,
-            Diff < D
-        )
-    ),!,
+    
+%iteration operator (temporal + atemporal contiguous pair constraints)
+compute_iteration_intervals(OP,[A|R],PredicateName,D,IL,TR):-
+    compute_iteration_intervals(OP,R,PredicateName,D,A,A,IL,TR).
+
+compute_iteration_intervals(_,[],_,_,_,[],[]):-!.
+compute_iteration_intervals(OP,[AA|R], PredicateName, D, PPrev, SStart, Z,TR):-
     (
         (
+         PredicateName=no_collection,
+         A=AA,
+         Prev=PPrev,
+         Start=SStart
+        );
+        (
+         PredicateName\=no_collection,
+         AA=(A,CVals),
+         PPrev=(Prev,PVals),
+         SStart=(Start,_SVals)
+        )
+    ),
+    Diff is A-Prev,
+    (
+        % temporal constraints unsatisfied
+        ( 
+            (
+                OP = <@,
+                Diff >= D
+            );
+            (
+                OP = =@,
+                Diff =\= D
+            );
+            (
+                OP = >=@,
+                Diff < D
+            )
+        );
+        % or atemporal constraints unsatisfied
+        (
+            PredicateName\=no_collection,
+            Prev > Start,
+            UserPredicate=..[PredicateName,PVals,CVals],
+            \+call(UserPredicate)
+        )
+    )    
+    ,!,
+    (
+        % if not the start of interval create one
+        (
             Prev > Start,!,
-            Z=[[Start,Prev]|IL]
+            Z=[[SStart,PPrev]|IL]
         )
         ;
         (
+        % if start of interval store start and continue
             Prev = Start,
             Z=IL
         )
     ),
-    compute_iteration_intervals(OP,R,D,A,A,IL,TR).
+    compute_iteration_intervals(OP,R,PredicateName,D,AA,AA,IL,TR).
 
-compute_iteration_intervals(OP,[A|R],D,Prev,Start,IL,TR):-
+compute_iteration_intervals(OP,[AA|R],PredicateName,D,PPrev,SStart,IL,TR):-
+    (
+        (
+         PredicateName=no_collection,
+         A=AA,
+         Prev=PPrev
+        );
+        (
+         PredicateName\=no_collection,
+         AA=(A,CVals),
+         PPrev=(Prev,PVals)
+        )
+    ),
     Diff is A-Prev,
     ( 
-        (
+        (   
+            % temporal constraints satisfied
+            (
             OP = <@,
             Diff < D
-        );
+            );
+            (
+                OP = =@,
+                Diff =:= D
+            );
+            (
+                OP = >=@,
+                Diff >= D
+            )
+        ),
         (
-            OP = =@,
-            Diff =:= D
-        );
-        (
-            OP = >=@,
-            Diff >= D
+            % atemporal constraints if exist
+            % and if A > Prev (not start of interva)
+            % satisfied
+            (
+                PredicateName=no_collection,
+                true
+            );
+            (   
+                PredicateName\=no_collection,
+                Prev < A,
+                UserPredicate=..[PredicateName,PVals,CVals],
+                call(UserPredicate)
+            );
+            (
+                PredicateName\=no_collection,
+                Prev=A,
+                true
+            )
         )
     ),!,
     (
         (
             R=[],
-            IL=[[Start,A]],
+            IL=[[SStart,AA]],
 	        TR=[]
         )
         ;
         (
             R\=[],
-            compute_iteration_intervals(OP,R,D,A,Start,IL,TR)
+            compute_iteration_intervals(OP,R,PredicateName,D,AA,SStart,IL,TR)
         )
     ).
 
-compute_iteration_intervals(_,[],_,Prev,_,[],[Prev]).
+compute_iteration_intervals(_,[],_,_,Prev,_,[],[Prev]).
+
 
 %single scan temporal union
 compute_union_intervals([],_,_,_,[]).

@@ -39,7 +39,7 @@
           level/2.
 
 :-multifile input_phenomenon/2.
-:-discontiguous atemporal_preprocess/3.
+:-discontiguous atemporal_preprocess/3, phenomenon_conditions/2.
 
 :-['./src/operators.prolog'].
 :-['./src/utilities.prolog'].

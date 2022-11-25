@@ -213,6 +213,14 @@ splice_interval_sets_drop([],[A|B],[A|B]).
 splice_interval_sets_drop([[ATS,T]|_],[[T,BTE]|IL],[[ATS,BTE]|IL]).
 splice_interval_sets_drop([[ATS,ATE]|_],[[BTS,BTE]|IL],[[ATS,ATE],[BTS,BTE]|IL]):-ATE\=BTS.
 
+splice_data_interval_sets_drop([],[],[]).
+splice_data_interval_sets_drop([_A|_B],[],[]).
+splice_data_interval_sets_drop([],[A|B],[A|B]).
+splice_data_interval_sets_drop([[ATS,(T,_)]|_],[[(T,_),BTE]|IL],[[ATS,BTE]|IL]).
+splice_data_interval_sets_drop([[ATS,(ATE,ATED)]|_],[[(BTS,BTSD),BTE]|IL],[[ATS,(ATE,ATED)],[(BTS,BTSD),BTE]|IL]):-ATE\=BTS.
+
+strip_data_from_intervals([],[]).
+strip_data_from_intervals([[(T1,_),(T2,_)]|R],[[T1,T2]|Z]):-strip_data_from_intervals(R,Z).
 
 
 %returns the last ending interval(s) with an instant 

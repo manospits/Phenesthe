@@ -162,6 +162,8 @@ transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     transform_instant_formula(L, PheVars, Lt, LTs),
     iteration_interval_computation_formula(OP,Lt, D, LTs, IL, PheVars, ProcessedFormula).
 
+
+
 transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     Formula=..[OP,L,R],
     member(OP,[union,intersection,complement]),!,
@@ -272,6 +274,7 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 iteration_interval_computation_formula(OP,Formula, D, Ts, IL, PheVars, ProcessedFormula):-
+    D\=collector(_,_,_),!,
     phe_getval(formula_id,FormulaId),
     term_variables(Formula,SVars),
     variable_list_diff(SVars, [Ts|PheVars], SVarsUnrelated),
@@ -294,6 +297,35 @@ iteration_interval_computation_formula(OP,Formula, D, Ts, IL, PheVars, Processed
         get_retained_iteration_formula_intervals(SVarsRelated,RI,FormulaId,Tqmw),
         splice_interval_sets_drop(RI,IIL,IL),
         retain_iteration_formula(OP,IL, LastPoinToRetain, D, SVarsRelated, FormulaId, Tcrit)
+    ),
+    FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
+
+iteration_interval_computation_formula(OP,Formula, Collector, Ts, IL, PheVars, ProcessedFormula):-
+    Collector = collector(D,VarsToCollect,PredicateName),
+    phe_getval(formula_id,FormulaId),
+    term_variables(Formula,SVars),
+    term_variables([PheVars,VarsToCollect],PheVarsC),
+    variable_list_diff(SVars, [Ts|PheVarsC], SVarsUnrelated),
+    variable_list_diff(SVars,SVarsUnrelated,SVarsRelated),
+    ProcessedFormula=(
+        phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
+        (
+          (
+           setof((TsRetained,VarsToCollect),retained_iteration_formula_points(SVarsRelated,(TsRetained,VarsToCollect),FormulaId,Tqmw),StartingPointsRetained),
+           setof_empty((Ts,VarsToCollect),SVarsUnrelated^Formula,StartingPointsNew)
+          );
+          (
+           setof_empty((Ts,VarsToCollect),SVarsUnrelated^Formula,StartingPointsNew),
+           \+setof((TsRetained,VarsToCollect),retained_iteration_formula_points(SVarsRelated,(TsRetained,VarsToCollect),FormulaId,Tqmw),_),
+           StartingPointsRetained=[]
+          )
+        ),
+        ord_union(StartingPointsNew,StartingPointsRetained,StartingPoints),
+        compute_iteration_intervals(OP,StartingPoints,PredicateName,D,IIL,LastPoinToRetain),
+        get_retained_iteration_formula_intervals(SVarsRelated,RI,FormulaId,Tqmw),
+        splice_data_interval_sets_drop(RI,IIL,ILD),
+        retain_iteration_formula(OP, ILD, LastPoinToRetain, D, SVarsRelated, FormulaId, Tcrit),
+        strip_data_from_intervals(ILD,IL)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
@@ -502,25 +534,63 @@ get_retained_iteration_formula_intervals(IterationFormula,[],FormulaId,Tcrit):-
 
 retain_iteration_formula(_,[],[], _,_,_,_).
 %no intervals only point A that doesn't matter
-retain_iteration_formula(OP, [], [A], D, _, _, Tcrit):-
+retain_iteration_formula(OP, [], [AA], D, _, _, Tcrit):-
+    (   
+        (
+            AA\=(_,_),
+            AA=A
+        );
+        (
+            AA=(A,_)
+        )
+    ),
     C is Tcrit+1-A,
     (OP \= >=@ -> (\+((A =< Tcrit, D >= C)));(\+((A =< Tcrit)))).
 %no intervals but point A matters
-retain_iteration_formula(OP, [], [A], D, IterationFormula, FormulaId, Tcrit):-
+retain_iteration_formula(OP, [], [AA], D, IterationFormula, FormulaId, Tcrit):-
+    (   
+        (
+            AA\=(_,_),
+            AA=A
+        );
+        (
+            AA=(A,_)
+        )
+    ),
 	A =< Tcrit, C is Tcrit+1-A, 
     (OP \= >=@ -> (D >= C);(true)),
-    assert_if_not_exists(retained_iteration_formula_points((IterationFormula),A,FormulaId,Tcrit)).
+    assert_if_not_exists(retained_iteration_formula_points((IterationFormula),AA,FormulaId,Tcrit)).
 %intervals but current interval doesn't matter
-retain_iteration_formula(OP,[[Ts,Te]|R], A, D, IterationFormula, FormulaId, Tcrit):-
+retain_iteration_formula(OP,[[TTs,TTe]|R], A, D, IterationFormula, FormulaId, Tcrit):-
+    (   
+        (
+            TTs\=(_,_),
+            TTs=Ts,TTe=Te
+        );
+        (
+            TTs=(Ts,_),
+            TTe=(Te,_)
+        )
+    ),
     C is Tcrit+1-Te,
     (OP \= >=@ -> \+((Ts =< Tcrit, D >= C)) ; \+(Ts =< Tcrit)),
     retain_iteration_formula(OP, R, A, D, IterationFormula,FormulaId, Tcrit).
 %intervals but current interval does matter
-retain_iteration_formula(OP, [[Ts,Te]|_R], _A, D, IterationFormula, FormulaId, Tcrit):-
+retain_iteration_formula(OP, [[TTs,TTe]|_R], _A, D, IterationFormula, FormulaId, Tcrit):-
+    (   
+        (
+            TTs\=(_,_),
+            TTs=Ts,TTe=Te
+        );
+        (
+            TTs=(Ts,_),
+            TTe=(Te,_)
+        )
+    ),
     Ts =< Tcrit, C is Tcrit+1-Te,
     (OP \= >=@ -> (D >= C); (true)),
-    assert_if_not_exists(retained_iteration_formula_intervals((IterationFormula),[[Ts,Te]],FormulaId,Tcrit)),
-    Te =< Tcrit -> assert_if_not_exists(retained_iteration_formula_points((IterationFormula),Te,FormulaId,Tcrit)). 
+    assert_if_not_exists(retained_iteration_formula_intervals((IterationFormula),[[TTs,TTe]],FormulaId,Tcrit)),
+    Te =< Tcrit -> assert_if_not_exists(retained_iteration_formula_points((IterationFormula),TTe,FormulaId,Tcrit)). 
 
 
 get_retained_tset_formula(OP,PheVars,FormulaId,Tqmw,RetainedIL):-
