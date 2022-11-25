@@ -1,3 +1,4 @@
+:-['../../src/operators.prolog'].
 :-multifile input_phenomenon/2.
 
 input_phenomenon(ais(_MMSI,_Speed,_CoG,_TrHeading),event).
@@ -11,7 +12,13 @@ event_phenomenon stop_end(V) := ais(V,S,_,_) aand S > 0.5.
 
 
 %state_phenomenon no_major_speed_changes(V) :=
-%    (ais(V,S1,_,_) aand S1 > 5) ~> (ais(V,S2,_,_) aand ((S3 is abs(S2-S1), S3 >6))).
+    %ais(V,S1,_,_) ~> (ais(V,S2,_,_) aand ((S3 is abs(S2-S1), S3 >6))).
+
+state_phenomenon no_major_speed_changes(V) :=
+    ais(V,S,_,_) <@ collector(600,[S],speed_diff_check).
+
+speed_diff_check([PrevSpeed],[CurSpeed]):- 
+    D is abs(CurSpeed-PrevSpeed), D < 6.
 
 state_phenomenon in_port(V,P) := entersPort(V,P) ~> leavesPort(V,P).
 state_phenomenon in_fishing_area(V,F) := entersFishingArea(V,F) ~> leavesFishingArea(V,F).
@@ -28,4 +35,3 @@ dynamic_phenomenon fishing_trip(V,PA,FA,PB):=
     (end(moored(V,PA)) aand vessel_type(V,fishing)) before
         ((underway(V) contains in_fishing_area(V,FA))
             before start(moored(V,PB))).
-
