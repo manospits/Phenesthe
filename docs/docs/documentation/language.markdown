@@ -28,7 +28,7 @@ temporalExpression = instantExpression | intervalExpression ;
 instantExpression = "("instantExpresstion")"| "tnot" instantExpression
                     | instantExpression ("and"|"or") instantExpression
                     | instantExpression "in" intervalOperation
-                    | instantExpression ("@<"|"@>="|"@=") PosInteger
+                    | instantExpression ("@<"|"@>="|"@=") (PosInteger|collector)
                     | instantExpression "aand" atemporalPrologExpression
                     | startEndOp | event; 
 
@@ -50,7 +50,9 @@ intervalRelation = temporalExpression "before" temporalExpression
                    | intervalRelation "aand" atemporalPrologExpression
                    |"("intervalRelation")" | dynamic;
 
-filter_option = ("less" | "greater" | equal")"("PosInteger")"
+collector = "collector(" PosInteger "," VarList "," predicateName ")";
+
+filter_option = ("less" | "greater" | equal")"("PosInteger")";
                    
 startEndOp = ("start"|"end")"("intervalOperation")";
 {% endhighlight %}
@@ -91,7 +93,8 @@ Disjoint interval formulae describe durative states that hold in disjoint interv
 | Temporal union | `fa union fb`  |  Holds when either `fa` or `fb` holds. |
 | Temporal intersection | `fa intersection fb` | Holds when both `fa` and `fb` hold.|
 | Temporal complement |   `fa complement fb` | Holds when `fa` holds but `fb` does not hold. |
-| Constrained iteration |   `fa [<,=,>=]@ N` | Holds when `fa' occurs at times with contiguous temporal distance (t1-t0) [<,=,>=] N. |       
+| Constrained temp. iteration |   `fa [<,=,>=]@ N` | Holds when `fa` occurs at times with contiguous temporal distance (t<sub>i</sub>-t<sub>i-1</sub>) [<,=,>=] N. |       
+| Constrained iteration |   `fa [<,=,>=]@ collector(N, Vars, predicateName)` | Holds when `fa` occurs at times with contiguous temporal distance (t<sub>i</sub>-t<sub>i-1</sub>) [<,=,>=] N and Pname(Vars<sub>i</sub>,Vars<sub>i-1</sub>) is true. |       
 | Filtering | `filter(fb,f(...))` | Filter intervals at which `fb` holds by applying function f on their individual size. |
 
 ##### Disjoint interval formulae examples
@@ -99,16 +102,31 @@ Disjoint interval formulae describe durative states that hold in disjoint interv
 ```
 gain(Person) ~> loss(Person)
 ```
+The above formula utilises the maximal range operator, therefore a period at which it holds starts at the earliest occurence of `gain(Person)` and continues to hold until `loss(Person)` occurs.
 
 2. A formula that holds when a vessel is both at a port and stopped.
 ```
 stopped(V) intersection in_port(V,P)
 ```
+Here, the above formula utilises temporal intersection between the time periods at which a vessel is stopped and inside a port.
 
 3. A formula that holds when vegetables are stirred at most every 30 seconds.
 ```
 stir(vegetables) <@ 30
 ```
+The above formula uses temporally constrained iteration on and holds for the time periods `stir(vegetables)` occurs consecutively with temporal distance between each consecutive occurence to be at most 30 seconds.
+
+4. A vessel has no major speed changes.
+```
+ais(V,S,_,_) <@ collector(600,[S],speed_diff_check)
+```
+The above formula utilises the constrained iteration with a collector. The first argument specifies the maximum temporal distance between each consecutive occurence, the second arguments is used for collecting atemporal arguments of the left side formula, while the last argument refers to the name of a predicate with arity 2, that compares the atemporal arguments of two consecutive occurrences. In this case `speed_diff_check` refers to the following predicate:
+```
+speed_diff_check([PrevSpeed],[CurSpeed]):- 
+    D is abs(CurSpeed-PrevSpeed), D < 3.
+```
+
+
 
 
 #### Non-disjoint interval formulae
