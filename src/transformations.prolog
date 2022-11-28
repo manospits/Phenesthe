@@ -13,7 +13,13 @@ transform_formula(Phenomenon, TransformedFormula, TemporalInformationList):-
     phenomenon_type(Phenomenon,PhenomenonType,user),
     phenomenon_conditions(Phenomenon, Formula),
     term_variables(Phenomenon, Variables),
-    transform_formula2(PhenomenonType, Formula, Variables, TransformedFormula, TemporalInformationList).
+    transform_formula2(PhenomenonType, Formula, Variables, TransformedFormula, TemporalInformationList),!.
+
+transform_formula(Phenomenon, _TransformedFormula, _TemporalInformationList):-
+    phenomenon_type(Phenomenon,_PhenomenonType,user),
+    format(user_error,'ERROR: Definition transformation of user phenomenon ~w failed.\n',[Phenomenon]),
+    halt(1).
+
 
 transform_formula2(event,Formula,Variables,TransformedFormula, InstantList):-
     transform_instant_formula(Formula, Variables, ProcessedFormula, PInstantList),
@@ -81,7 +87,9 @@ transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
         member(T,InstantList)
     ).
 
-% in
+% checks whether an instant formula occurs during a disjoint
+% interval formula (A in B is is true on instants at which A is 
+% true and are included in an interval at which B is true)
 transform_instant_formula(in(L,R), PheVars, ProcessedFormula, T):-!,
     term_variables([PheVars,L],LPheVars),
     term_variables([PheVars,R],RPheVars),
@@ -156,14 +164,14 @@ transform_dinterval_formula(~>(L,R),PheVars, ProcessedFormula, IL):-!,
     transform_instant_formula(R, LPheVars, Rt, LTe),
     maximal_interval_computation_formula(Lt, Rt, LTs, LTe, IL, PheVars, ProcessedFormula).
 
+% constrained iteration
 transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     Formula=..[OP,L,D],
     member(OP,[<@,>=@,=@]),!,
     transform_instant_formula(L, PheVars, Lt, LTs),
     iteration_interval_computation_formula(OP,Lt, D, LTs, IL, PheVars, ProcessedFormula).
 
-
-
+% temporal union/intersection/complement
 transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     Formula=..[OP,L,R],
     member(OP,[union,intersection,complement]),!,
@@ -173,6 +181,7 @@ transform_dinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     transform_dinterval_formula(R,LPheVars,Rt,RIL),
     tset_computation_formula(OP,Lt,Rt,LIL,RIL,IL,PheVars,ProcessedFormula).
 
+% interval filtering
 transform_dinterval_formula(filter(Formula, Operation), PheVars, ProcessedFormula, IL):-
     transform_dinterval_formula(Formula, PheVars, DPFormula, PIL),
     term_variables(DPFormula,PFVars),
@@ -183,6 +192,7 @@ transform_dinterval_formula(filter(Formula, Operation), PheVars, ProcessedFormul
         apply_filter(Operation,ILNF,IL)
     ).
 
+% atemporal conjuntion
 transform_dinterval_formula(aand(L,R), PheVars, ProcessedFormula, IL):-
     term_variables([R,PheVars],RPheVars),
     transform_dinterval_formula(L,RPheVars,LAt,IL),
@@ -190,15 +200,17 @@ transform_dinterval_formula(aand(L,R), PheVars, ProcessedFormula, IL):-
         LAt,R
     ).
 
+% user defined state intervals
 transform_dinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     phenomenon_type(Formula,state,user),
     ProcessedFormula=(state_intervals(Formula,IL)).
 
+% input intervals
 transform_dinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     phenomenon_type(Formula,state,input),
     ProcessedFormula=(input_state_interval(Formula,I),IL=[I]).
 
-
+% formula that computes temporal union intersection and complement 
 tset_computation_formula(OP,LFormula,RFormula,LIL,RIL,IL,PheVars,ProcessedFormula):-
     phe_getval(formula_id,FormulaId),
     term_variables(LFormula,LFormulaVars),
@@ -238,15 +250,19 @@ tset_computation_formula(OP,LFormula,RFormula,LIL,RIL,IL,PheVars,ProcessedFormul
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
-
+% temporal union/intersection/complement helpers
 compute_tset_intervals(union,SEL,IL):-compute_union_intervals(SEL,0,0,_,IL).
 compute_tset_intervals(intersection,SEL,IL):-compute_intersection_intervals(SEL,0,0,_,IL).
 compute_tset_intervals(complement,SEL,IL):-compute_complement_intervals(SEL,0,0,_,IL).
 
+% maximal interval computation formula transformation
 maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheVars,ProcessedFormula):-
     phe_getval(formula_id,FormulaId),
     term_variables(StartingFormula,SVars),
     term_variables(EndingFormula,EVars),
+    % we need to pass variables of left formula to right
+    % and the reverse to make sure we don't skip in 
+    % set of any unifications
     term_variables([SVars,PheVars],LPheVarsF),
     term_variables([EVars,PheVars],RPheVarsF),
     variable_list_diff(SVars,[Ts|RPheVarsF],SVarsUnrelated),
@@ -255,24 +271,32 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
     ProcessedFormula=(
         phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         (
+          % check if there are any retained results from before
           (
            setof(TsRetained,retained_starting_formula(SVarsRelated,TsRetained,FormulaId,Tqmw),StartingPointsRetained),
            setof_empty(Ts,SVarsUnrelated^StartingFormula,StartingPointsNew)
           );
           (
+          % if there aren't proceed as usual. Extra care must be take to avoid duplicates.
            setof_empty(Ts,SVarsUnrelated^StartingFormula,StartingPointsNew),
            \+setof(TsRetained,retained_starting_formula(SVarsRelated,TsRetained,FormulaId,Tqmw),_),
            StartingPointsRetained=[]
           )
         ),
+        %merge old starting points with retained
         ord_union(StartingPointsNew,StartingPointsRetained,StartingPoints),
+        %find ending points
         setof_empty(Te,EVarsUnrelated^EndingFormula,EndingPoints),
+        %create the appropriate se list
         merge_se(StartingPoints,EndingPoints,SEList),
+        %compute the maximal intervals
         compute_maximal_intervals(SEList,(_,n),IL),
+        %check if you need to retain anything for next query and retain it
         retain_starting_formula(IL, SVarsRelated, FormulaId, Tcrit)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
+% iteration computation formula with temporal only constraints
 iteration_interval_computation_formula(OP,Formula, D, Ts, IL, PheVars, ProcessedFormula):-
     D\=collector(_,_,_),!,
     phe_getval(formula_id,FormulaId),
@@ -300,6 +324,15 @@ iteration_interval_computation_formula(OP,Formula, D, Ts, IL, PheVars, Processed
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
+% iteration computation formula with temporal constraints and atemporal constraints on consecutive pairs
+% collector(    
+%               D,                : Same as above (some temporal threshold)
+%               VarsToCollect,    : A list of the variables of the left formula 
+%                                   you want to use in the atemporal constraints
+%               PredicateName     : The predicate to call for comparing prev with current.
+%                                   For example for speed_check(Prev,Cur), PredicateName
+%                                   should be speed_check.
+%           ) 
 iteration_interval_computation_formula(OP,Formula, Collector, Ts, IL, PheVars, ProcessedFormula):-
     Collector = collector(D,VarsToCollect,PredicateName),
     phe_getval(formula_id,FormulaId),
@@ -328,8 +361,7 @@ iteration_interval_computation_formula(OP,Formula, Collector, Ts, IL, PheVars, P
         strip_data_from_intervals(ILD,IL)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
-
-%--------------------------------------------------------------
+%-------------------------------------------------------------------
 
 
 %%
@@ -351,17 +383,19 @@ transform_ndinterval_formula_internal(Formula, Allowed, OtherVars, TransformedFo
      (member(dinterval,Allowed), transform_ndinterval_formula(Formula, OtherVars, TransformedFormula, TemporalInformationList), FormulaType=ndinterval)).
 
 
+% relations
 transform_ndinterval_formula(Formula, PheVars, ProcessedFormula, IL):-
     Formula=..[Relation, L, R],
     allowed_formulae(Relation, AllowedL, AllowedR),!,
     term_variables([L,PheVars],LPheVars),
     term_variables([R,PheVars],RPheVars),
+    %check which formulae are allowed left and right based on the relation
     transform_ndinterval_formula_internal(L, AllowedL, RPheVars, LTransformed, LTIL, LType),
     transform_ndinterval_formula_internal(R, AllowedR, LPheVars, RTransformed, RTIL, RType),
     formulae_ints_type(LType,RType,FType),
     relation_intervals_formula(Relation, FType, LType, RType, LTransformed, RTransformed, LTIL, RTIL, IL, PheVars, ProcessedFormula).
 
-
+% atemporal conjunction
 transform_ndinterval_formula(aand(L,R), PheVars, ProcessedFormula, IL):-
     term_variables([R,PheVars],RPheVars),
     transform_ndinterval_formula(L,RPheVars,LAt,IL),
@@ -369,14 +403,17 @@ transform_ndinterval_formula(aand(L,R), PheVars, ProcessedFormula, IL):-
         LAt,R
     ).
 
+% user defined dynamic temporal phenomenon
 transform_ndinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     phenomenon_type(Formula,dynamic_phenomenon,user),
     ProcessedFormula=(dynamic_phenomenon_intervals_internal(Formula,IL); \+dynamic_phenomenon_intervals_internal(Formula,_),IL=[]).
 
+% input temporal phenomenon
 transform_ndinterval_formula(Formula, _PheVars, ProcessedFormula, IL):-
     phenomenon_type(Formula,dynamic_phenomenon,input),
     ProcessedFormula=(input_dynamic_phenomenon_interval(Formula,I),IL=[I]).
 
+% before relation ** not the usual allen relations before ** intervals must be contiguous
 relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     !,phe_getval(formula_id,FormulaId),
     term_variables(LFormula,LFormulaVars),
@@ -417,6 +454,7 @@ relation_intervals_formula(before, FT, LType, RType, LFormula, RFormula, LIL, RI
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 
+% meets, overlaps and starts are handled similarly
 relation_intervals_formula(Relation, FT, LType, RType,LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     member(Relation,[meets,overlaps,starts]),!,
     phe_getval(formula_id,FormulaId),
@@ -454,6 +492,7 @@ relation_intervals_formula(Relation, FT, LType, RType,LFormula, RFormula, LIL, R
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
+% contains relation treatment
 relation_intervals_formula(contains, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     !,phe_getval(formula_id,FormulaId),
     term_variables(LFormula,LFormulaVars),
@@ -478,6 +517,7 @@ relation_intervals_formula(contains, FT, LType, RType, LFormula, RFormula, LIL, 
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
+% finishes relation treatment
 relation_intervals_formula(finishes, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     !,term_variables(LFormula,LFormulaVars),
     term_variables(RFormula,RFormulaVars),
@@ -494,6 +534,7 @@ relation_intervals_formula(finishes, FT, LType, RType, LFormula, RFormula, LIL, 
         compute_relation_intervals(finishes, FT, MergedLIList, MergedRIList, IL, Tcrit)
     ).
 
+% remaining relations treatments
 relation_intervals_formula(Relation, FT, LType, RType, LFormula, RFormula, LIL, RIL, IL, PheVars, ProcessedFormula):-
     term_variables(LFormula,LFormulaVars),
     term_variables(RFormula,RFormulaVars),

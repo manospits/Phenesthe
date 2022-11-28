@@ -85,11 +85,6 @@ preprocess_phenomena_definitions:-
         preprocess_phenomenon_definition(X,PType),
         compute_topological_place(X,P),
         assertz(level(X,P))
-    ),_),
-    findall(_,(
-        phenomenon_type(X,_,user),
-        \+(phenomenon_transformed_conditions(X,_C,_T)),
-        format('ERROR: Definition transformation of phenomenon ~w failed.\n',[X])
     ),_).
 
 dependencies(X,[]):-
@@ -215,7 +210,7 @@ process_phenomenon(Phenomenon):-
     (
         PType='dynamic_phenomenon',!,
         process_dynamic_phenomenon(Phenomenon)
-    )).
+    )),!.
 
 process_event(Phenomenon):-
     %find valid groundings
@@ -225,8 +220,6 @@ process_event(Phenomenon):-
     (ProcessedFormula,
      ground(Phenomenon),
      InstantList\=[],
-     %thread_self(ID),
-     %format('Thread ~w asserts ~w\n',[ID,event_instants(Phenomenon,InstantList)]),
      assert_if_not_exists(event_instants(Phenomenon,InstantList))
     ),_),!.
 
