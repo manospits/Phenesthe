@@ -9,7 +9,7 @@ nav_order: 1
 The task of maritime monitoring involves the detection of maritime activities of vessels, using maritime information. Maritime activities involve usual vessel behaviour (e.g., vessel underway, moored etc) or abnormal vessel behaviour such as illegal activities etc. In this example we illustrate the use of Phenesthe for the task of maritime monitoring.
 
 ### Input phenomena
-We assume that the input is in the appropriate format ([input stream format](/documentation/stream)) and included the input phenomena of the following table.
+We assume that the input is in the appropriate format ([input stream format](Phenesthe/docs/documentation/stream.html#input-stream-format)) and included the input phenomena of the following table.
 
 | Input Phenomenon | Description  |
 |---|---|
