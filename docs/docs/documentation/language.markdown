@@ -25,7 +25,7 @@ dynamic = dynamicPhenomenonName(...);
 
 temporalExpression = instantExpression | intervalExpression ;
 
-instantExpression = "("instantExpresstion")"| "tnot" instantExpression
+instantExpression = "("instantExpresstion")"| ("tnot"|"gtnot") instantExpression
                     | instantExpression ("and"|"or") instantExpression
                     | instantExpression "in" intervalOperation
                     | instantExpression ("@<"|"@>="|"@=") (PosInteger|collector)
@@ -69,6 +69,7 @@ Instant formulae describe happenings that are true in instants of time.
 | Conjunction | `fa and fb`  | True at instants where both `fa` and `fb` occur. |
 | Disjunction | `fa or fb`  |  True at instants where either `fa` or `fb` occurs. |
 | Negation    | `tnot fa` | True at instants where `fa` does not occur.|
+| Negation (grounded) | `gtnot fa` | True when `fa` is grounded and not true at the evaluation instant.|
 | Start |   `start(fa)` | True at the instant `fa` starts holding. |
 | End |   `end(fa)` | True at the instant `fa` stops holding. |       
 | Inclusion | `fa in fb` | True if `fa` occurs while `fb` holds. |
