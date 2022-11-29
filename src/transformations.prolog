@@ -87,6 +87,16 @@ transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
         member(T,InstantList)
     ).
 
+%is true when the grounded formula does not gold on T
+transform_instant_formula(gtnot(R), PheVars, ProcessedFormula, T):-!,
+    transform_instant_formula(R, PheVars, RAt, T),
+    term_variables(RAt,RAtVars),
+    variable_list_diff(RAtVars,[T|PheVars],RAtVarsUnrelated),
+    variable_list_diff(RAtVars,RAtVarsUnrelated,RAtVarsRelated),
+    ProcessedFormula=(
+        ground(RAtVarsRelated), RAt
+    ).
+
 % checks whether an instant formula occurs during a disjoint
 % interval formula (A in B is is true on instants at which A is 
 % true and are included in an interval at which B is true)
