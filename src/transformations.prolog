@@ -277,7 +277,7 @@ maximal_interval_computation_formula(StartingFormula,EndingFormula,Ts,Te,IL,PheV
     term_variables([EVars,PheVars],RPheVarsF),
     variable_list_diff(SVars,[Ts|RPheVarsF],SVarsUnrelated),
     variable_list_diff(EVars,[Te|LPheVarsF],EVarsUnrelated),
-    variable_list_diff(SVars,SVarsUnrelated,SVarsRelated),
+    variable_list_diff(SVars,[Ts|SVarsUnrelated],SVarsRelated),
     ProcessedFormula=(
         phe_getval(tqmw,Tqmw),phe_getval(tcrit,Tcrit),
         (
@@ -641,7 +641,7 @@ retain_iteration_formula(OP, [[TTs,TTe]|_R], _A, D, IterationFormula, FormulaId,
     Ts =< Tcrit, C is Tcrit+1-Te,
     (OP \= >=@ -> (D >= C); (true)),
     assert_if_not_exists(retained_iteration_formula_intervals((IterationFormula),[[TTs,TTe]],FormulaId,Tcrit)),
-    Te =< Tcrit -> assert_if_not_exists(retained_iteration_formula_points((IterationFormula),TTe,FormulaId,Tcrit)). 
+    Te =< Tcrit -> assert_if_not_exists(retained_iteration_formula_points((IterationFormula),TTe,FormulaId,Tcrit)) ; true. 
 
 
 get_retained_tset_formula(OP,PheVars,FormulaId,Tqmw,RetainedIL):-
