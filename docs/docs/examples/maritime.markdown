@@ -9,7 +9,7 @@ nav_order: 1
 The task of maritime monitoring involves the detection of maritime activities of vessels, using maritime information. Maritime activities involve usual vessel behaviour (e.g., vessel underway, moored etc) or abnormal vessel behaviour such as illegal activities etc. In this example we illustrate the use of Phenesthe for the task of maritime monitoring.
 
 ### Input phenomena
-We assume that the input is in the appropriate format ([input stream format](documentation/stream.html)) and included the input phenomena of the following table.
+We assume that the input is in the appropriate format ([input stream format](/documentation/stream)) and included the input phenomena of the following table.
 
 | Input Phenomenon | Description  |
 |---|---|
@@ -53,29 +53,29 @@ Here we  present some example definitions for the maritime phenomena included in
 The definitions for the above temporal phenomena are included below. 
 
 1. **Stop start and end**
-```
+```prolog
 event_phenomenon stop_start(V) := ais(V,S,_,_) aand S =< 0.5.
 event_phenomenon stop_end(V) := ais(V,S,_,_) aand S > 0.5.
 ```
 2. **In range**
-```
+```prolog
 state_phenomenon in_range(V) :=
     ais(V,_,_,_) <@ 600.
 ```
 3. **No major speed changes**
-```
+```prolog
 state_phenomenon no_major_speed_changes(V) :=
     ais(V,S,_,_) <@ collector(600,[S],speed_diff_check).
 speed_diff_check([PrevSpeed],[CurSpeed]):- 
     D is abs(CurSpeed-PrevSpeed), D < 6.
 ```
 4. **In port/fishing area**
-```
+```prolog
 state_phenomenon in_port(V,P) := entersPort(V,P) ~> leavesPort(V,P).
 state_phenomenon in_fishing_area(V,F) := entersFishingArea(V,F) ~> leavesFishingArea(V,F).
 ```
 5. **Stopped and underway vessels**
-```
+```prolog
 state_phenomenon stopped(V) := stop_start(V) ~> stop_end(V).
 state_phenomenon underway(V) := 
     ( 
@@ -86,11 +86,11 @@ state_phenomenon underway(V) :=
     ).
 ```
 6. **Moored vessels**
-```
+```prolog
 state_phenomenon moored(V,P) := stopped(V) intersection in_port(V,P).
 ```
 7. **(Fishing) Trips**
-```
+```prolog
 dynamic_phenomenon trip(V,PA,PB):=
     end(moored(V,PA)) before
      (underway(V) before start(moored(V,PB))).
