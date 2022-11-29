@@ -9,7 +9,7 @@ nav_order: 1
 The task of maritime monitoring involves the detection of maritime activities of vessels, using maritime information. Maritime activities involve usual vessel behaviour (e.g., vessel underway, moored etc) or abnormal vessel behaviour such as illegal activities etc. In this example we illustrate the use of Phenesthe for the task of maritime monitoring.
 
 ### Input phenomena
-We assume that the input is in the appropriate format [Input stream format](documentation/stream) and included the input phenomena of the following table.
+We assume that the input is in the appropriate format ([input stream format](documentation/stream.html)) and included the input phenomena of the following table.
 
 | Input Phenomenon | Description  |
 |---|---|
@@ -66,7 +66,6 @@ state_phenomenon in_range(V) :=
 ```
 state_phenomenon no_major_speed_changes(V) :=
     ais(V,S,_,_) <@ collector(600,[S],speed_diff_check).
-
 speed_diff_check([PrevSpeed],[CurSpeed]):- 
     D is abs(CurSpeed-PrevSpeed), D < 6.
 ```
@@ -95,7 +94,6 @@ state_phenomenon moored(V,P) := stopped(V) intersection in_port(V,P).
 dynamic_phenomenon trip(V,PA,PB):=
     end(moored(V,PA)) before
      (underway(V) before start(moored(V,PB))).
-
 dynamic_phenomenon fishing_trip(V,PA,FA,PB):=
     (end(moored(V,PA)) aand vessel_type(V,fishing)) before
         ((underway(V) contains in_fishing_area(V,FA))
