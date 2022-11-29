@@ -1,4 +1,5 @@
 :-multifile input_phenomenon/2.
+:-['../phenesthe.prolog'].
 
 input_phenomenon(drop(_Person,_Object),event).
 input_phenomenon(pickup(_Person,_Object),event).
@@ -10,12 +11,12 @@ input_phenomenon(stares(_PersonA,_PersonB),event).
 %gain when picking up sth and not dropping sth
 event_phenomenon gain(Person) :=
     pickup(Person, _Object) and
-    tnot drop(Person,_).
+    gtnot drop(Person,_).
 
 %loss when dropping sth and not picking up sth
 event_phenomenon loss(Person) :=
     drop(Person, _Object1) and
-    tnot pickup(Person, _Object2).
+    gtnot pickup(Person, _Object2).
 
 %no effect when loss and gain
 event_phenomenon unchanged(Person) :=

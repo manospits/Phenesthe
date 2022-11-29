@@ -94,7 +94,7 @@ transform_instant_formula(gtnot(R), PheVars, ProcessedFormula, T):-!,
     variable_list_diff(RAtVars,[T|PheVars],RAtVarsUnrelated),
     variable_list_diff(RAtVars,RAtVarsUnrelated,RAtVarsRelated),
     ProcessedFormula=(
-        ground(RAtVarsRelated), RAt
+        ground(RAtVarsRelated), \+(RAt)
     ).
 
 % checks whether an instant formula occurs during a disjoint

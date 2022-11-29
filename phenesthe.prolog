@@ -102,7 +102,7 @@ find_dependencies(Condition,D):-
 % start end ops or tnot
 find_dependencies(Condition,D):-
     Condition=..[OP,StateExpr],
-    member(OP,[start,end,tnot]),!,
+    member(OP,[start,end,tnot,gtnot]),!,
     find_dependencies(StateExpr,D).
 
 % filter op
