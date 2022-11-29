@@ -80,11 +80,16 @@ transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
     transform_instant_formula(R, PheVars, RAt, Ti),
     term_variables(RAt,RAtVars),
     variable_list_diff(RAtVars,[Ti|PheVars],RAtVarsUnrelated),
+    variable_list_diff(RAtVars,[T|RAtVarsUnrelated],RAtVarsRelated),
     ProcessedFormula=(
-        setof_empty(Ti,RAtVarsUnrelated^RAt,RInstantList),
-        phe_getval(current_window_instants,InstantListW),
-        ord_subtract(InstantListW,RInstantList,InstantList),
-        member(T,InstantList)
+        ground(RAtVarsRelated) -> 
+            (Ti=T,\+(RAt))
+            ;
+            (\+ground(RAtVarsRelated),
+            setof_empty(Ti,RAtVarsUnrelated^RAt,RInstantList),
+            phe_getval(current_window_instants,InstantListW),
+            ord_subtract(InstantListW,RInstantList,InstantList),
+            member(T,InstantList))
     ).
 
 %is true when the grounded formula does not gold on T
