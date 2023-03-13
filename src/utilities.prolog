@@ -19,9 +19,7 @@ merge_ilse([A|AL],[B|BL],[(FA,(XC1N,XC2N))|RIL]):-
     getf(A,FA,AR,(XA1,XA2)),
     getf(B,FB,BR,(XB1,XB2)),
     FA=FB,
-    XC1 is XA1 + XB1,
-    XC2 is XA2 + XB2,
-    update_xc(XC1,XC2,XC1N,XC2N),
+    update_xc((XA1,XA2),(XB1,XB2),XC1N,XC2N),
     append(BR,BL,BN),
     append(AR,AL,AN),
     merge_ilse(AN,BN,RIL).
@@ -40,9 +38,10 @@ merge_ilse([A|AL],[B|BL],[(FB,XB)|RIL]):-
     append(BR,BL,BN),
     merge_ilse([A|AL],BN,RIL).
 
-update_xc(1,1,1:[a],1:[b]).
-update_xc(2,0,2:[a,b],0:[]).
-update_xc(0,2,0:[],2:[a,b]).
+update_xc((1,0),(0,1),1:[a],1:[b]).
+update_xc((0,1),(1,0),1:[b],1:[a]).
+update_xc((1,0),(1,0),2:[a,b],0:[]).
+update_xc((0,1),(0,1),0:[],2:[a,b]).
 
 %get the first or the last item of an interval (used above)
 getf([A,B],A,[[B]],(1,0)).
