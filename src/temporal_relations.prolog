@@ -99,7 +99,7 @@ compute_arelation_intervals(Relation, A, B, Tq, I):-
 
 %----------- OUTER ----------------
 compute_arelation_intervals1(_,[],[],_,[]):-!.
-compute_arelation_intervals1(_,[],_B,_,[]):-!.
+compute_arelation_intervals1(_,[],_,_,[]):-!.
 compute_arelation_intervals1(Relation, A, [], Tq, I):-!,
     Tq1 is Tq + 1,
     compute_arelation_intervals1(Relation,A,([Tq1,inf],u),_Ar,Tq,I).
@@ -110,120 +110,12 @@ compute_arelation_intervals1(Relation, A,[(B,V)|Rb], Tq, I):-
     ord_merge(Ic,Ir,I).
 
 %-------------- INNER ----------------------
-
 % assuming b true
 compute_arelation_intervals1(Relation, A, ([TSb,TEb],V), ARemaining, Tq, I):-
-    % if ARelationTrueI = ARelationUnknownI = [] -> use next Bi
-    % if ARelationTrueI = [], ARelationUnknownI /= [] -> create unknown intervals 
-    % if ARelationTrueI /= [], ARelationUnknownI = [] -> create true intervals 
-    % if ARelationTrueI /= [], ARelationUnknownI /= [] -> create both
     tur(Relation, A,([TSb,TEb],V),Tq,ARelationTrueI,ARelationUnknownI,ARemaining),
     create_intervals(Relation, ARelationTrueI, ARelationUnknownI, ([TSb,TEb],V), TI, UI),
     ord_merge(TI,UI,IS),
     sort(IS,I).
-
-    %(
-        %(ARelationTrueI = [],ARelationUnknownI = []) -> I=[] ;
-        %(
-            %(( 
-              %member(Relation, [meets,overlaps]), !,
-              %findall(([TS,TEb],t), member([TS,_],ARelationTrueI), TI),
-              %(ARelationUnknownI = [] -> UI =[] ; (ARelationUnknownI = [[TS,_]|_], UI=[([TS,TEb],u)]))
-            %);
-            %( 
-                %Relation = equals,!,
-                %findall(([TS,TE],Vt), (member([TSi,TEi],ARelationTrueI),
-                                            %max(TSi,TSb,TS),
-                                            %min(TEi,TEb,TE)), TI),
-                %(
-                    %ARelationUnknownI = [] -> 
-                        %UI =[] ; 
-                        %(  
-                            %V=t -> UI= [([TSb,TEb],u)] ;
-                            %(
-                                %ARelationUnknownI = [[TSi,TEi]|_],
-                                %max(TSi,TSb,TS),
-                                %min(TEi,TEb,TE),
-                                %UI=[([TS,TE],u)]
-                            %)
-                        %)
-                %)
-            %);
-            %(
-                %(Relation = starts; Relation = finishes), !,
-                %(ARelationTrueI \= [] -> TI=[([TSb,TEb],t)] ; TI = []),
-                %(
-                    %TI=[]-> (
-                        %ARelationUnknownI = [] -> 
-                            %UI =[] ; 
-                            %(   
-                                %(V=t -> UI = [([TSb,TEb],u)] ; 
-                                %findall(([TSo,TEo],u),
-                                    %(
-                                        %member([TSx,TEx],ARelationUnknownI),
-                                        %(TSx<TEx ->  (max(TSx,TSb,TSo), min(TEx,TEb,TEo); (TSo=TSb,TEo=TEb),
-                                        %TSo < TEo
-                                    %),UI))
-                                   
-                            %)
-                    %); (UI=[],true)
-                %)
-            %)), 
-            %).
-create_intervals(_, [], [], _, [],[]).
-% equals
-create_intervals(equals, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
-    True \= [].
-create_intervals(equals, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u)]):-
-    Unk \= [].
-create_intervals(equals, [], Unk, ([TSb,TEb],u), [], UI):-
-    Unk \= [],
-    findall(([TSo,TEo],u),(member([TSx,TEx],Unk), max(TSx,TSb,TSo), min(TEx,TEb,TEo)),UIs),sort(UIs,UI).
-
-% starts finishes
-create_intervals(R, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
-    member(R,[starts,finishes]),
-    True \= [],!.
-create_intervals(R, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u)]):-
-    member(R,[starts,finishes]),
-    Unk \= [],!.
-create_intervals(starts, [], Unk, ([TSb,TEb],u), [], UI):-
-    Unk \= [],
-    findall(([TSo,TEo],u),(member([TSx,_TEx],Unk),
-                           max(TSx,TSb,TSo),
-                           TEo=TEb),UIs),sort(UIs,UI).
-create_intervals(finishes, [], Unk, ([TSb,TEb],u), [], UI):-
-    Unk \= [],
-    findall(([TSo,TEo],u),(member([_TSx,TEx],Unk),
-                           min(TEx,TEb,TEo),
-                           TSo=TSb),UIs),sort(UIs,UI).
-
-% meets/overlaps 
-create_intervals(R, True, _Unk, ([_TSb,TEb],t), TI,[]):-
-    member(R,[meets,overlaps]),
-    True\=[],!,
-    findall(([TSx,TEb],t),member([TSx,_],True),TI).
-create_intervals(R, [], [[TSa,_TEa]|_], ([_TSb,TEb],t), [], [([TSa,TEb],u)]):-
-    member(R,[meets,overlaps]),!.
-create_intervals(R, [], Unk, ([_TSb,TEb],u), [], UI):-
-    member(R,[meets,overlaps]),
-    Unk \= [],
-    findall(([TSo,TEo],u),(member([TSx,TEx],Unk),
-                           (TEx\=inf -> TEx1 is TEx+1; TEx1 = TEx),
-                           min(TEx1,TEb,TEo),
-                           TSo=TSx),UIs),sort(UIs,UI).
-
-% meets/overlaps 
-create_intervals(contains, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
-    True\=[],!.
-create_intervals(contains, [], [[_TSa,_TEa]|_], ([TSb,TEb],t), [], [([TSb,TEb],u)]):-!.
-create_intervals(contains, [], Unk, ([_TSb,TEb],u), [], UI):-
-    Unk \= [],
-    findall( ([TSo,TEo],u),(member([TSo,TEx],Unk),
-                           (TEx\=inf -> TEx1 is TEx+1; TEx1 = TEx),
-                            min(TEb, TEx,TEo)),UI).
-
-
 
 % b relation -> for each a process b
 compute_brelation_intervals(Relation, A,B,Tq,I):-
@@ -243,32 +135,70 @@ compute_brelation_intervals1(Relation,[],[(B,V)|Rb],Tq,I):-!,
 compute_brelation_intervals1(Relation,A,[(B,V)|Rb], Tq, I):-
     compute_brelation_intervals1(Relation,A, (B,V), Ar, Tq, Ic),
     compute_brelation_intervals1(Relation,Ar, Rb, Tq, Ir),
-     ord_merge(Ic,Ir,I).
+    ord_merge(Ic,Ir,I).
 
 %-------------- INNER ----------------------
 
 % assuming b true
 compute_brelation_intervals1(Relation,A,([TSb,TEb],V), ARemaining, Tq, I):-
-    % if BRelationTrueI = BRelationUnknownI = [] -> use next Bi
-    % if BRelationTrueI = [], BRelationUnknownI /= [] -> create unknown intervals 
-    % if BRelationTrueI /= [], BRelationUnknownI = [] -> create true intervals 
-    % if BRelationTrueI /= [], BRelationUnknownI /= [] -> create both
     tur(Relation, A, ([TSb,TEb],V),Tq,BRelationTrueI,BRelationUnknownI,ARemaining),
-    (
-        (BRelationTrueI = [],BRelationUnknownI = [], I=[],!) ;
-        (BRelationTrueI \=[], Relation\=finishes, I = [([TSb,TEb],t)],!);
-        (BRelationTrueI \=[], Relation=finishes, findall(([TSo,TEo],t),member([TSo,TEo],BRelationTrueI),I),!);
-        (BRelationUnknownI \=[], 
-            (
-                Relation\=finishes -> I = [([TSb,TEb],u)] ;
-                (
-                    findall( ([TSo,TE],u),(member([TSo,TEi],BRelationUnknownI),
-                                            min(TEb, TEi,TE)),
-                    I)
-                )
-            )
-        )
-    ).
+    create_intervals(Relation,BRelationTrueI,BRelationUnknownI,([TSb,TEb],V),TI,UI),
+    ord_merge(TI,UI,IS),
+    sort(IS,I).
+
+create_intervals(_, [], [], _, [],[]).
+%-------------------------------- equals
+create_intervals(equals, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
+    True \= [].
+create_intervals(equals, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u)]):-
+    Unk \= [].
+create_intervals(equals, [], Unk, ([TSb,TEb],u), [], UI):-
+    Unk \= [],
+    findall(([TSo,TEo],u),(member([TSx,TEx],Unk), max(TSx,TSb,TSo), min(TEx,TEb,TEo)),UIs),sort(UIs,UI).
+
+%-------------------------------- starts finishes
+create_intervals(R, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
+    member(R,[starts,finishes]),
+    True \= [],!.
+create_intervals(R, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u)]):-
+    member(R,[starts,finishes]),
+    Unk \= [],!.
+create_intervals(starts, [], Unk, ([TSb,TEb],u), [], UI):-
+    Unk \= [],
+    findall(([TSo,TEo],u),(member([TSx,_TEx],Unk),
+                           max(TSx,TSb,TSo),
+                           TEo=TEb),UIs),sort(UIs,UI).
+create_intervals(finishes, [], Unk, ([TSb,TEb],u), [], UI):-
+    Unk \= [],
+    findall(([TSo,TEo],u),(member([_TSx,TEx],Unk),
+                           min(TEx,TEb,TEo),
+                           TSo=TSb),UIs),sort(UIs,UI).
+
+%------------------------------- meets/overlaps 
+create_intervals(R, True, _Unk, ([_TSb,TEb],t), TI,[]):-
+    member(R,[meets,overlaps]),
+    True\=[],!,
+    findall(([TSx,TEb],t),member([TSx,_],True),TI).
+create_intervals(R, [], [[TSa,_TEa]|_], ([_TSb,TEb],t), [], [([TSa,TEb],u)]):-
+    member(R,[meets,overlaps]),!.
+create_intervals(R, [], Unk, ([_TSb,TEb],u), [], UI):-
+    member(R,[meets,overlaps]),
+    Unk \= [],
+    findall(([TSo,TEo],u),(member([TSx,TEx],Unk),
+                           (TEx\=inf -> TEx1 is TEx+1; TEx1 = TEx),
+                           min(TEx1,TEb,TEo),
+                           TSo=TSx),UIs),sort(UIs,UI).
+
+%------------------------------- contains 
+create_intervals(contains, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
+    True\=[],!.
+create_intervals(contains, [], [[_TSa,_TEa]|_], ([TSb,TEb],t), [], [([TSb,TEb],u)]):-!.
+create_intervals(contains, [], Unk, ([_TSb,TEb],u), [], UI):-
+    Unk \= [],
+    findall( ([TSo,TEo],u),(member([TSo,TEx],Unk),
+                           (TEx\=inf -> TEx1 is TEx+1; TEx1 = TEx),
+                            min(TEb, TEx,TEo)),UI).
+
 
 find_max_end([],Z,Z).
 find_max_end([[_,Te]|R],Z,O):-
