@@ -9,14 +9,19 @@ input_phenomenon(angry(_Person),state).
 input_phenomenon(stares(_PersonA,_PersonB),event).
 
 %gain when picking up sth and not dropping sth
+event_phenomenon gain1(Person) :=
+    pickup(Person, _Object).
+
+%gain when picking up sth and not dropping sth
 event_phenomenon gain(Person) :=
     pickup(Person, _Object) and
-    gtnot drop(Person,_).
+    %gtnot drop(Person,_).
+    tnot drop(Person,_).
 
 %loss when dropping sth and not picking up sth
 event_phenomenon loss(Person) :=
     drop(Person, _Object1) and
-    gtnot pickup(Person, _Object2).
+    tnot pickup(Person, _Object2).
 
 %no effect when loss and gain
 event_phenomenon unchanged(Person) :=
@@ -39,24 +44,23 @@ event_phenomenon ate_and_dropped(Person) :=
 event_phenomenon ate_while_happy(Person,X):=
     ate(Person,X) in happy(Person).
 
-%a person posses something when he picks it up
+%a person possesses something when he picks it up
 %stops possesing it if it drops it
 state_phenomenon possess(Person, Object) :=
     pickup(Person, Object) ~> drop(Person, Object).
+
+%a person possesses something when he picks it up
+%stops possesing it if it drops it but for finite time
+state_phenomenon finite_possession(Person, Object) :=
+   filter(possess(Person,Object),less(inf)).
+
+event_phenomenon start_of_a_finite_possesion(Person,Object):=
+    start(finite_possession(Person,Object)) and start(possess(Person,Object)).
 
 %a person is happy when there is gain
 %stops being happy when there is loss
 state_phenomenon happy(Person) :=
     gain(Person) ~> loss(Person).
-
-state_phenomenon keep_dropping(Person) :=
-    drop(Person, _Object) <@ 4.
-
-state_phenomenon regular_stare(PersonA,PersonB) :=
-    stares(PersonA,PersonB) =@ 4.
-
-state_phenomenon not_so_regular_stare(PersonA,PersonB) :=
-    stares(PersonA,PersonB) >=@ 4.
 
 state_phenomenon sad(Person) :=
     loss(Person) ~> gain(Person).

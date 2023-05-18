@@ -25,17 +25,18 @@
           phenomenon_conditions/2,
           phenomenon_transformed_conditions/3,
           input_event_instant/2,
-          event_instants/2,
+          event_instants_internal/2,
           input_state_interval/2,
-          state_intervals/2,
+          state_intervals_internal/2,
           input_dynamic_phenomenon_interval/2,
-          dynamic_phenomenon_intervals/2,
           dynamic_phenomenon_intervals_internal/2,
-          retained_starting_formula/4,
-          retained_iteration_formula_points/4,
-          retained_iteration_formula_intervals/4,
-          retained_tset_formula_intervals/5,
-          retained_relation_formula_temp_info/5,
+          formula_retaining_time/4,
+          instant_left_retained/5, %instant_right_retained(FormulaId, Tq,LRVarsRelated,T,V),
+          instant_right_retained/5,
+          retained_right_instants/4,
+          retained_left_instants/4, %retained_left_instants(FormulaId, Tq, LRVarsRelated, RetainedInstants),
+          retained_left_intervals/4,
+          retained_right_intervals/4, %retained_right_intervals(FormulaId, Tq, LRVarsRelated, RetainedIntervals),
           level/2.
 
 :-multifile input_phenomenon/2.
@@ -142,13 +143,14 @@ preprocess_phenomenon_definition(X,user):-
 %%% Recognition (processing) of an entity
 %%%
 recognition_query(WindowSize,Step,Tq):-
-    Tcrit is Tq+Step-WindowSize,
-    Tqmw is Tq-WindowSize,
-    Tqmws is Tq-WindowSize-Step,
-    discard_redundant(Tqmw,Tqmws),
-    Tqmw1 is Tqmw+1,
-    create_window_instants(Tqmw1,Tq,WindowInstants),
-    phe_setval(tcrit,Tcrit),
+
+    (WindowSize > 0 -> Tqmw is Tq-WindowSize ; Tqmw = 0),
+    Tqms is Tq-Step,
+    Tqmss is Tq-Step-Step,
+    discard_redundant(Tqms,Tqmss),
+    Tqms1 is Tq-Step+1,
+    create_window_instants(Tqms1,Tq,t,WindowInstants),
+    phe_setval(tqms,Tqms),
     phe_setval(tqmw,Tqmw),
     phe_setval(tq,Tq),
     phe_setval(current_window_instants,WindowInstants),
@@ -169,32 +171,34 @@ process_level(Level, WindowSize, Step, Tq):-
     process_level(NextLevel, WindowSize, Step, Tq).
 
 
-discard_redundant(Tqmw,Tqmws):-
+discard_redundant(Tqms,Tqmss):-
     %retract all recognised
-    forall(phenomenon_type(X,event,user),retractall(event_instants(X,_))),
-    forall(phenomenon_type(X,state,user),retractall(state_intervals(X,_))),
+    forall(phenomenon_type(X,event,user),retractall(event_instants_internal(X,_))),
+    forall(phenomenon_type(X,state,user),retractall(state_intervals_internal(X,_))),
     forall(phenomenon_type(X,dynamic_phenomenon,user),retractall(dynamic_phenomenon_intervals_internal(X,_))),
     %retract input entities
     forall((phenomenon_type(X,event,input),
             input_event_instant(X,T),
-            T=<Tqmw),
+            T=<Tqms),
            retract(input_event_instant(X,T))),
     %retract input states
     forall((phenomenon_type(X,state,input),
         input_state_interval(X,[Ts,Te]),
-        Te=<Tqmw),
+        Te=<Tqms),
         retract(input_state_interval(X,[Ts,Te]))),
     %retract dynamic phenomena intervals
     forall((phenomenon_type(X,dynamic_phenomenon,input),
         input_dynamic_phenomenon_interval(X,[Ts,Te]),
-        Te=<Tqmw),
+        Te=<Tqms),
         retract(input_dynamic_phenomenon_interval(X,[Ts,Te]))),
     %retract old retained information
-    retractall(retained_starting_formula(_,_,_,Tqmws)),
-    retractall(retained_iteration_formula_points(_,_,_,Tqmws)),
-    retractall(retained_iteration_formula_intervals(_,_,_,Tqmws)),
-    retractall(retained_tset_formula_intervals(_,_,_,Tqmws,_)),
-    retractall(retained_relation_formula_temp_info(_,_,_,Tqmws,_)).
+    retractall(formula_retaining_time(_, _, Tqmss, _)),
+    retractall(instant_left_retained(_, Tqmss,_,_,_)),
+    retractall(instant_right_retained(_, Tqmss,_,_,_)),
+    retractall(retained_left_instants(_, Tqmss,_,_)),
+    retractall(retained_right_instants(_, Tqmss,_,_)),
+    retractall(retained_left_intervals(_, Tqmss,_,_)),
+    retractall(retained_right_intervals(_, Tqmss,_,_)).
 
 
 process_phenomenon(Phenomenon):-
@@ -220,7 +224,7 @@ process_event(Phenomenon):-
     (ProcessedFormula,
      ground(Phenomenon),
      InstantList\=[],
-     assert_if_not_exists(event_instants(Phenomenon,InstantList))
+     assert_if_not_exists(event_instants_internal(Phenomenon,InstantList))
     ),_),!.
 
 process_state(Phenomenon):-
@@ -230,7 +234,7 @@ process_state(Phenomenon):-
         (
         ProcessedFormula,
         IL\=[],
-        assert_if_not_exists(state_intervals(Phenomenon,IL))
+        assert_if_not_exists(state_intervals_internal(Phenomenon,IL))
         )
     ,_).
 
@@ -244,8 +248,28 @@ process_dynamic_phenomenon(Phenomenon):-
         assert_if_not_exists(dynamic_phenomenon_intervals_internal(Phenomenon,IL))
         )
     ,_).
+event_instants(Phenomenon,TL):-
+    phenomenon_type(Phenomenon,event,user),
+    event_instants_internal(Phenomenon,IIL),
+    findall((T,t),member((T,t),IIL),TL),
+    TL\=[].
+
+state_intervals(Phenomenon,IL):-
+    phenomenon_type(Phenomenon,state,user),
+    phe_getval(tq,Tq),
+    state_intervals_internal(Phenomenon,IIL),
+    findall(([TS,TE1],t),(
+        member(([TS,TE],t),IIL),
+        (TE=inf -> atom_concat(Tq,'+',TE1) ; TE1 = TE)
+    ),IL),
+    IL\=[].
 
 dynamic_phenomenon_intervals(Phenomenon,IL):-
     phenomenon_type(Phenomenon,dynamic_phenomenon,user),
+    phe_getval(tq,Tq),
     dynamic_phenomenon_intervals_internal(Phenomenon,IIL),
-    clean_from_unk(IIL,IL),IL\=[].
+    findall(([TS,TE1],t),(
+        member(([TS,TE],t),IIL),
+        (TE=inf -> atom_concat(Tq,'+',TE1) ; TE1 = TE)
+    ),IL),
+    IL\=[].

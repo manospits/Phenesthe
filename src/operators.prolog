@@ -21,9 +21,7 @@
 :-op(1040,xfy,intersection).
 :-op(1039,xfy,union).
 :-op(1038,xfy,~>).
-:-op(1037,xfy,<@).
-:-op(1037,xfy,>=@).
-:-op(1037,xfy,=@).
+:-op(1037,xfy,~>>).
 
 :-op(1036,xfy,aand).
 :-op(1035,xfy,or).
@@ -33,7 +31,7 @@
 :-op(1032,fy,gtnot).
 
 op_list([aand,tnot,gtnot,and,or,in,
-        <@,>=@,=@,~>,union,intersection,complement,
+        ~>,~>>,union,intersection,complement,
         before,overlaps,meets,contains,starts,finishes,equals,filter]).
 
 instant_op_list([and,or,gtnot,tnot,start,end]).

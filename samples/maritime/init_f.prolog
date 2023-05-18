@@ -1,7 +1,7 @@
 % load Phenesthe
 :-['../../phenesthe.prolog'].
 % load the maritime definitions
-:-['./definitions.prolog'].
+:-['./definitions_f.prolog'].
 % load vessel types
 :-['./vessel_types.prolog'].
 % preprocess phenomena definitions (transform them, find evaluation order, etc.)

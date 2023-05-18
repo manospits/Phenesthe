@@ -7,60 +7,63 @@
 % merge two interval lists into one that has instants and information
 % regarding if that instant is a start or an end of an interval
 merge_ilse([],[],[]).
-merge_ilse([],[[B1,B2]|BL],[(B1,(1:[b],0:[]))|RIL]):-
-    merge_ilse([],[[B2]|BL],RIL).
-merge_ilse([],[[B2]|BL],[(B2,(0:[],1:[b]))|RIL]):-
+merge_ilse([],[([B1,B2],V)|BL],[(B1,(1:[(b,V)],0:[]))|RIL]):-
+    merge_ilse([],[([B2],V)|BL],RIL).
+merge_ilse([],[([B2],V)|BL],[(B2,(0:[],1:[(b,V)]))|RIL]):-
     merge_ilse([],BL,RIL).
-merge_ilse([[A1,A2]|AL],[],[(A1,(1:[a],0:[]))|RIL]):-
-    merge_ilse([[A2]|AL],[],RIL).
-merge_ilse([[A2]|AL],[],[(A2,(0:[],1:[a]))|RIL]):-
+merge_ilse([([A1,A2],V)|AL],[],[(A1,(1:[(a,V)],0:[]))|RIL]):-
+    merge_ilse([([A2],V)|AL],[],RIL).
+merge_ilse([([A2],V)|AL],[],[(A2,(0:[],1:[(a,V)]))|RIL]):-
     merge_ilse(AL,[],RIL).
-merge_ilse([A|AL],[B|BL],[(FA,(XC1N,XC2N))|RIL]):-
-    getf(A,FA,AR,(XA1,XA2)),
-    getf(B,FB,BR,(XB1,XB2)),
+merge_ilse([(A,Va)|AL],[(B,Vb)|BL],[(FA,(XC1N,XC2N))|RIL]):-
+    getf(A,Va,FA,AR,(XA1,XA2)),
+    getf(B,Vb,FB,BR,(XB1,XB2)),
     FA=FB,
-    update_xc((XA1,XA2),(XB1,XB2),XC1N,XC2N),
+    update_xc((XA1,XA2),(XB1,XB2),Va,Vb,XC1N,XC2N),
     append(BR,BL,BN),
     append(AR,AL,AN),
     merge_ilse(AN,BN,RIL).
 
-merge_ilse([A|AL],[B|BL],[(FA,XA)|RIL]):-
-    getf(A,FA,a,AR,XA),
-    getf(B,FB,b,_,_),
+merge_ilse([(A,Va)|AL],[(B,Vb)|BL],[(FA,XA)|RIL]):-
+    getf(A,Va,FA,a,AR,XA),
+    getf(B,Vb,FB,b,_,_),
     FA<FB,
     append(AR,AL,AN),
-    merge_ilse(AN,[B|BL],RIL).
+    merge_ilse(AN,[(B,Vb)|BL],RIL).
 
-merge_ilse([A|AL],[B|BL],[(FB,XB)|RIL]):-
-    getf(A,FA,a,_,_),
-    getf(B,FB,b,BR,XB),
+merge_ilse([(A,Va)|AL],[(B,Vb)|BL],[(FB,XB)|RIL]):-
+    getf(A,Va,FA,a,_,_),
+    getf(B,Vb,FB,b,BR,XB),
     FB<FA,
     append(BR,BL,BN),
-    merge_ilse([A|AL],BN,RIL).
-
-update_xc((1,0),(0,1),1:[a],1:[b]).
-update_xc((0,1),(1,0),1:[b],1:[a]).
-update_xc((1,0),(1,0),2:[a,b],0:[]).
-update_xc((0,1),(0,1),0:[],2:[a,b]).
-
-%get the first or the last item of an interval (used above)
-getf([A,B],A,[[B]],(1,0)).
-getf([A],A,[],(0,1)).
-getf([A,B],A,N,[[B]],(1:[N],0:[])).
-getf([A],A,N,[],(0:[],1:[N])).
-
+    merge_ilse([(A,Va)|AL],BN,RIL).
 
 %merge se, from two instant lists create a single one that has
 %triples (instant,membershipinfirst, membershipinsecond)
-merge_se([A|SP],[B|EP],[(A,1,1)|R]):-
+merge_se([(A,Va)|SP],[(B,Vb)|EP],[(A,1:[Va],1:[Vb])|R]):-
     B=A,merge_se(SP,EP,R).
-merge_se([A|SP],[B|EP],[(A,1,0)|R]):-
-    A<B,!,merge_se(SP,[B|EP],R).
-merge_se([A|SP],[B|EP],[(B,0,1)|R]):-
-    B<A,!,merge_se([A|SP],EP,R).
-merge_se([],[B|EP],[(B,0,1)|R]):-merge_se([],EP,R).
-merge_se([A|SP],[],[(A,1,0)|R]):-merge_se(SP,[],R).
+merge_se([(A,Va)|SP],[(B,Vb)|EP],[(A,1:[Va],0:[])|R]):-
+    A<B,!,merge_se(SP,[(B,Vb)|EP],R).
+merge_se([(A,Va)|SP],[(B,Vb)|EP],[(B,0:[],1:[Vb])|R]):-
+    B<A,!,merge_se([(A,Va)|SP],EP,R).
+merge_se([],[(B,Vb)|EP],[(B,0:[],1:[Vb])|R]):-merge_se([],EP,R).
+merge_se([(A,Va)|SP],[],[(A,1:[Va],0:[])|R]):-merge_se(SP,[],R).
 merge_se([],[],[]).
+
+
+update_xc((1,0),(0,1),Va,Vb,1:[(a,Va)],1:[(b,Vb)]).
+update_xc((0,1),(1,0),Va,Vb,1:[(b,Vb)],1:[(a,Va)]).
+update_xc((1,0),(1,0),Va,Vb,2:[(a,Va),(b,Vb)],0:[]).
+update_xc((0,1),(0,1),Va,Vb,0:[],2:[(a,Va),(b,Vb)]).
+
+%get the first or the last item of an interval (used above)
+getf([A,B],V,A,[([B],V)],(1,0)).
+getf([A],_V,A,[],(0,1)).
+
+getf([A,B],V,A,N,[([B],V)],(1:[(N,V)],0:[])).
+getf([A],V,A,N,[],(0:[],1:[(N,V)])).
+
+
 
 %returns the variables of the first list that are not in the second
 variable_list_diff([A|T],BL,[A|Td]):- \+vmember(A,BL),variable_list_diff(T,BL,Td).
@@ -110,39 +113,34 @@ ord_merge([H1|T1], L2, Merge):-
 
 ord_merge2([], H1, T1, [H1|T1]).
 ord_merge2([H2|T2], H1, T1, Merge):-
-    interval_compare(Order, H1, H2),
-    ord_merge3(Order, H1, T1, H2, T2, Merge).
+    interval_compare(Order, H1, H2, H3),
+    ord_merge3(Order, H1, T1, H2, T2, H3, Merge).
 
-ord_merge3(<, H1, T1, H2, T2, [H1|Merge]) :-
+ord_merge3(<, H1, T1, H2, T2, _, [H1|Merge]) :-
     ord_merge2(T1, H2, T2, Merge).
-ord_merge3(=, H1, T1, _H2, T2, [H1|Merge]) :-
+ord_merge3(=, _H1, T1, _H2, T2, H3, [H3|Merge]) :-
     ord_merge(T1, T2, Merge).
-ord_merge3(>, H1, T1, H2, T2, [H2|Merge]) :-
+ord_merge3(>, H1, T1, H2, T2, _, [H2|Merge]) :-
     ord_merge2(T2, H1, T1, Merge).
 
 
-interval_compare(<,I1,I2):-
-    temporal_information(I1,TS1,_TE1,_),
-    temporal_information(I2,TS2,_TE2,_),
-    lt(TS1,TS2).
-interval_compare(<,I1,I2):-
-    temporal_information(I1,TS,TE1,_),
-    temporal_information(I2,TS,TE2,_),
-    lt(TE1,TE2).
-interval_compare(>,I1,I2):-
-    temporal_information(I1,TS1,_TE1,_),
-    temporal_information(I2,TS2,_TE2,_),
-    gt(TS1,TS2).
-interval_compare(>,I1,I2):-
-    temporal_information(I1,TS,TE1,_),
-    temporal_information(I2,TS,TE2,_),
-    gt(TE1,TE2).
-interval_compare(=,I1,I2):-
-    temporal_information(I1,TS,TE,_),
-    temporal_information(I2,TS,TE,_).
+interval_compare(<,([TSa,_TEa],_V1),([TSb,_TEb],_V2),_V3):-
+    TSa < TSb.
+interval_compare(<,([TS,TEa],_V1),([TS,TEb],_V2),_V3):-
+    TEa < TEb.
+interval_compare(>,([TSa,_TEa],_V1),([TSb,_TEb],_V2),_V3):-
+    TSa > TSb.
+interval_compare(>,([TS,TEa],_V1),([TS,TEb],_V2),_V3):-
+    TEa > TEb.
+interval_compare(=,([TS,TE],V1),([TS,TE],V2),([TS,TE],V3)):-
+    member(t,[V1,V2]) -> V3 = t ; V3=u.
 
 min(A,B,A):-leq(A,B),!.
 min(A,B,B):-lt(B,A).
+
+max(A,B,B):-leq(A,B),!.
+max(A,B,A):-lt(B,A).
+
 
 %create the intervals for current B interval
 create_intervals(_,_,_,[],[],[],_):-!.
@@ -315,11 +313,11 @@ instant_complement(StartTime,EndTime,Formula,T):-
     StartTime1 is StartTime+1,
     instant_complement(StartTime1,EndTime,Formula,T).
 
-create_window_instants(StartTime,EndTime,[]):-
+create_window_instants(StartTime,EndTime,_,[]):-
     StartTime>EndTime,!.
-create_window_instants(StartTime,EndTime,[StartTime|R]):-
+create_window_instants(StartTime,EndTime,V,[(StartTime,V)|R]):-
     StartTime1 is StartTime+1,
-    create_window_instants(StartTime1,EndTime,R).
+    create_window_instants(StartTime1,EndTime,V,R).
 
 
 assert_if_not_exists(X):-
@@ -337,7 +335,7 @@ merge_instant_lists([],[]).
 merge_instant_lists([A|Tail],Merged):-
     is_list(A),
     merge_instant_lists(Tail,TailMerged),
-    ord_union(A,TailMerged,Merged).
+    compute_disjunction(A,TailMerged,Merged).
 merge_instant_lists([A|Tail],[A|Tail]):-
     \+is_list(A).
 
@@ -345,7 +343,7 @@ merge_disjoint_interval_lists([],[]).
 merge_disjoint_interval_lists([A|Tail],Union):-
     merge_disjoint_interval_lists(Tail,TailUnion),
     merge_ilse(A,TailUnion,SEL),
-    compute_union_intervals(SEL,0,0,_,Union).
+    compute_union_intervals(SEL,0,0,0,_,Union).
 
 merge_non_disjoint_interval_lists([],[]).
 merge_non_disjoint_interval_lists([A|Tail],Merged):-
@@ -376,45 +374,70 @@ remaining([[_TS,TE]|IL],T,RIL):-
     TE =< T,
     remaining(IL,T,RIL).
 
-%old_code
-%ord_merge([],[],[]):-!.
-%ord_merge(I,[],I):-I\=[],!.
-%ord_merge([],I,I):-I\=[],!.
+merge_wt_with_unk([],[],[]):-!.
+merge_wt_with_unk([],I,I):-!.
+merge_wt_with_unk(I,[],I):-!.
+merge_wt_with_unk([(T,t)|R1],[(T,u)|R2],[(T,u)|R]):-
+    merge_wt_with_unk(R1,R2,R),!.
+merge_wt_with_unk([(T,t)|R1],[(T1,u)|R2],[(T1,u)|R]):-
+    T1 < T,
+    merge_wt_with_unk([(T,t)|R1],R2,R),!.
+merge_wt_with_unk([(T,t)|R1],[(T1,u)|R2],[(T,t)|R]):-
+    T1 > T,
+    merge_wt_with_unk(R1,[(T1,u)|R2],R),!.
 
-%ord_merge([A|AR],[B|BR],[A|ABR]):-
-    %temporal_information(A,TSA,_TEA,_),
-    %temporal_information(B,TSB,_TEB,_),
-    %lt(TSA,TSB),!,
-    %ord_merge(AR,[B|BR],ABR).
-%ord_merge([A|AR],[B|BR],[B|ABR]):-
-    %temporal_information(A,TSA,_TEA,_),
-    %temporal_information(B,TSB,_TEB,_),
-    %gt(TSA,TSB),!,
-    %ord_merge([A|AR],BR,ABR).
-%ord_merge([A|AR],[B|BR],[A|ABR]):-
-    %temporal_information(A,TSA,TEA,_),
-    %temporal_information(B,TSB,TEB,_),
-    %TSA=TSB,
-    %lt(TEA,TEB),!,
-    %ord_merge(AR,[B|BR],ABR).
-%ord_merge([A|AR],[B|BR],[B|ABR]):-
-    %temporal_information(A,TSA,TEA,_),
-    %temporal_information(B,TSB,TEB,_),
-    %TSA=TSB,
-    %gt(TEA,TEB),!,
-    %ord_merge([A|AR],BR,ABR).
-%ord_merge([A|AR],[B|BR],[B|ABR]):-
-    %temporal_information(A,TSA,TEA,[]),
-    %temporal_information(B,TSB,TEB,[]),
-    %TSA=TSB,
-    %TEA=TEB,!,
-    %ord_merge(AR,BR,ABR).
-%ord_merge([A|AR],[B|BR],[([TSA,TEA],V3)|ABR]):-
-    %temporal_information(A,TSA,TEA,V1),
-    %temporal_information(B,TSB,TEB,V2),
-    %append(V1,V2,V3),
-    %TSA=TSB,
-    %TEA=TEB,!,
-    %ord_merge(AR,BR,ABR).
+%conjunction for true
+%and unknown
+e_and(t,t,t).
+e_and(u,u,u).
+e_and(u,t,u).
+e_and(t,u,u).
+    
+% relations utilities
+start_same([TS,_],[([TS,_],_)|_]).
 
+split_true_unknown([],[],[]).
+split_true_unknown([(V,t)|R],[(V,t)|Rt],Ru):-
+    split_true_unknown(R,Rt,Ru).
+split_true_unknown([(V,u)|R],Rt,[[(V,u)]|Ru]):-
+    split_true_unknown(R,Rt,Ru).
+
+int_member([TSa,TEa], [[TSa,TEa]|_R], Tc):- TSa < Tc.
+int_member(_, [[TSa,_TEa]|_R], Tc):- TSa >= Tc,!,fail.
+int_member(Z, [_|R], Tc):- int_member(Z, R, Tc).
+
+sublist_intervals_starting([],_,[]).
+sublist_intervals_starting([[Z,_B]|_RA],A,[]):-Z\=A.
+sublist_intervals_starting([[A,B]|RA],A,[[A,B]|R]):-
+    sublist_intervals_starting(RA,A,R).
+
+tunion(A, I):- merge_disjoint_interval_lists(A,I).
+
+
+
+convert_points_to_pis([],[]).
+convert_points_to_pis([([A,B],V)|R],[([A,B],V)|R]):-!.
+convert_points_to_pis([(A,V)|R1],[([A,A],V)|R2]):-
+    convert_points_to_pis(R1,R2).
+
+find_tcrit_from_results([],Z,Z).
+find_tcrit_from_results([([TS,_TE],u)|R],Z1,Z):-!,
+    %V = unknown
+    TS < Z1 -> find_tcrit_from_results(R,TS,Z);
+    find_tcrit_from_results(R,Z1,Z).
+find_tcrit_from_results([([TS,inf],t)|R],Z1,Z):-!,
+    %V = t 
+    TS < Z1 -> find_tcrit_from_results(R,TS,Z);
+    find_tcrit_from_results(R,Z1,Z).
+find_tcrit_from_results([([_TS,TE],t)|R],Z1,Z):-!,
+    %V = t 
+    TE\=inf,
+    find_tcrit_from_results(R,Z1,Z).
+find_tcrit_from_results([(T,u)|R],Z1,Z):-!,
+    %V = unknown
+    T < Z1 -> find_tcrit_from_results(R,T,Z);
+    find_tcrit_from_results(R,Z1,Z).
+find_tcrit_from_results([(_T,t)|R],Z1,Z):-!,
+    %V = t 
+    find_tcrit_from_results(R,Z1,Z).
 

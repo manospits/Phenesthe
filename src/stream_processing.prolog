@@ -46,9 +46,9 @@ stream_perform_query((IFd,LFd,RFd),Retained,Step,Window,QueryTime):-
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
     count_input(IEi,ISi,IDi),
     count_results((Ea,Ei),(Sa,Si),(Da,Di)),
-    count_retained(MrOPRetained,ItOPRetainedP,ItOPRetainedI,TSetOpRetained,TRelRetained),
-    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)),
-    print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),MrOPRetained,ItOPRetainedP,ItOPRetainedI,TSetOpRetained,TRelRetained),
+    count_retained(TotalPRetained,TotalIRetained),
+    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
+    print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
     print_results(RFd,QueryTime,Window),
     writeln("\n\n"),
     NewQueryTime is QueryTime+Step,
@@ -96,9 +96,9 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
     count_input(IEi,ISi,IDi),
     count_results((Ea,Ei),(Sa,Si),(Da,Di)),
-    count_retained(MrOPRetained,ItOPRetainedP,ItOPRetainedI,TSetOpRetained,TRelRetained),
-    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)),
-    print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),MrOPRetained,ItOPRetainedP,ItOPRetainedI,TSetOpRetained,TRelRetained),
+    count_retained(TotalPRetained,TotalIRetained),
+    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
+    print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
     print_results(RFd,QueryTime,Window),
     writeln("\n\n"),
     NewQueryTime is QueryTime+Step,
@@ -200,39 +200,60 @@ count_results((Ea,Ei),(Sa,Si),(Da,Di)):-
     length(D_Info,Da),
     sumlist(D_Info,Di).
 
-count_retained(MrOPRetained,ItOPRetainedP,ItOPRetainedI,TSetOpRetained,TRelRetained):-
-    findall(_,retained_starting_formula(_,_,_,_),A),
-    findall(_,retained_iteration_formula_points(_,_,_,_),B),
-    findall(_,retained_iteration_formula_intervals(_,_,_,_),C),
-    findall(_,retained_tset_formula_intervals(_,_,_,_,_),D),
-    findall(_,retained_relation_formula_temp_info(_,_,_,_,_),E),
-    length(A,MrOPRetained),
-    length(B,ItOPRetainedP),
-    length(C,ItOPRetainedI),
-    length(D,TSetOpRetained),
-    length(E,TRelRetained).
+count_retained(TotalInstants,TotalIntervals):-
+    findall(_,instant_left_retained(_, Tqmws,_,_,_),A),
+    findall(_,instant_right_retained(_, Tqmws,_,_,_),B),
+    findall(T,retained_left_instants(_, Tqmws,_,T),C),
+    findall(T,retained_right_instants(_, Tqmws,_,T),D),
+    findall(I,retained_left_intervals(_, Tqmws,_,I),E),
+    findall(I,retained_right_intervals(_, Tqmws,_,I),F),
+    length(A,LI),
+    length(B,RI),
+    findall(L,(member(X,C),length(X,L)),CL),
+    findall(L,(member(X,D),length(X,L)),DL),
+    findall(L,(member(X,E),X=[([_,_],_)|_],length(X,L)),EL),
+    findall(L,(member(X,E),X=[(A,_)|_],A\=[_,_],length(X,L)),ELT),
+    findall(L,(member(X,F),X=[([_,_],_)|_],length(X,L)),FL),
+    findall(L,(member(X,F),X=[(A,_)|_],A\=[_,_],length(X,L)),FLT),
+    sumlist(CL,CLS),
+    sumlist(DL,DLS),
+    sumlist(EL,ELS),
+    sumlist(ELT,ELTS),
+    sumlist(FL,FLS),
+    sumlist(FLT,FLTS),
+    TotalInstants is LI+RI+CLS+DLS+ELTS+FLTS,
+    TotalIntervals is ELS+FLS.
 
 
-print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di), MrOPRetained, ItOPRetainedP, ItOPRetainedI, TSetOpRetained, TRelRetained):-
+    %findall(_,retained_starting_formula(_,_,_,_),A),
+    %findall(_,retained_iteration_formula_points(_,_,_,_),B),
+    %findall(_,retained_iteration_formula_intervals(_,_,_,_),C),
+    %findall(_,retained_tset_formula_intervals(_,_,_,_,_),D),
+    %findall(_,retained_relation_formula_temp_info(_,_,_,_,_),E),
+    %length(A,MrOPRetained),
+    %length(B,ItOPRetainedP),
+    %length(C,ItOPRetainedI),
+    %length(D,TSetOpRetained),
+    %length(E,TRelRetained).
+
+
+print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di), TotalP, TotalI):-
     write('Input event instants: '),  writeln(IEi),
     write('Input intervals: '), writeln(ISi),
     write('Input dynamic phe. intervals: '), writeln(IDi),nl,
     write('User event instances/instants: '), write(Ea), write('/'), writeln(Ei),
     write('User state instances/intervals: '), write(Sa), write('/'), writeln(Si),
     write('User dynamic phe. instances/intervals: '), write(Da), write('/'), writeln(Di),nl,
-    ItOPRetained is ItOPRetainedP + ItOPRetainedI,
-    write('Maximal range operator ret. clauses: '), writeln(MrOPRetained),
-    write('Iteration operator ret. clauses: '), writeln(ItOPRetained),
-    write('Temporal set operator ret. clauses: '), writeln(TSetOpRetained),
-    write('Temporal relations ret. clauses: '), writeln(TRelRetained).
+    write('Retained instants: '), writeln(TotalP),
+    write('Retained intervals: '), writeln(TotalI).
 
-log_stats(LFd,Tq,Rt,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di)):-
-    write_comma_separated(LFd,[Tq,Rt,IEi,ISi,IDi,Ea,Ei,Sa,Si,Da,Di]),nl(LFd).
+log_stats(LFd,Tq,Rt,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),RP,RI):-
+    write_comma_separated(LFd,[Tq,Rt,IEi,ISi,IDi,Ea,Ei,Sa,Si,Da,Di,RP,RI]),nl(LFd).
 prepare_log_file(LFd):-
     write_comma_separated(LFd,['query time','processing time','input event instants','input state intervals',
                                'input dynamic phe. intervals', 'user event instances', 'user event instants',
                                'user state instances','user state intervals', 'user dynamic phe. instances',
-                               'user dynamic phe. intervals']), nl(LFd).
+                               'user dynamic phe. intervals','retained instants','retained intervals']), nl(LFd).
 
 print_results(RFd, QueryTime, Window):-
     write(RFd,"Tq = "),write(RFd,QueryTime),write(RFd,", W = "),write(RFd,Window),nl(RFd),

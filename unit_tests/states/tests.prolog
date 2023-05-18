@@ -11,38 +11,34 @@ test(query0):-
 
 %maximal interval operator depends on input events
 test(case0):-
-    assertion(findall(L,state_intervals(possess(bob,torch),L),[[[1,5]]])),
-    assertion(findall(L,state_intervals(possess(bob,coin),L),[[[3,inf]]])),
-    assertion(findall(L,state_intervals(possess(alice,wallet),L),[[[4,inf]]])).
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
+    assertion(findall(L,state_intervals(possess(bob,torch),L),[[([1,5],t)]])),
+    assertion(findall(L,state_intervals(possess(bob,coin),L),[[([3,Tqp],t)]])),
+    assertion(findall(L,state_intervals(possess(alice,wallet),L),[[([4,Tqp],t)]])).
 
 %maximal interval operator depends on user events
 test(case1):-
-    assertion(findall(L,state_intervals(happy(bob),L),[[[1,5]]])),
-    assertion(findall(L,state_intervals(happy(alice),L),[[[4,inf]]])),
-    assertion(findall(L,state_intervals(sad(bob),L),[[[5,inf]]])).
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
+    assertion(findall(L,state_intervals(happy(bob),L),[[([1,5],t)]])),
+    assertion(findall(L,state_intervals(happy(alice),L),[[([4,Tqp],t)]])),
+    assertion(findall(L,state_intervals(sad(bob),L),[[([5,Tqp],t)]])).
 
 %union
 test(case2):-
-    assertion(findall(L,state_intervals(happy_or_angry(bob),L),[[[1,5]]])),
-    assertion(findall(L,state_intervals(happy_or_angry(alice),L),[[[1,2],[4,inf]]])).
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
+    assertion(findall(L,state_intervals(happy_or_angry(bob),L),[[([1,5],t)]])),
+    assertion(findall(L,state_intervals(happy_or_angry(alice),L),[[([1,2],t),([4,Tqp],t)]])).
 
 %intersection-
 test(case3):-
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
     assertion(findall(L,state_intervals(happy_with_money(bob),L),[])),
-    assertion(findall(L,state_intervals(happy_with_money(alice),L),[[[4,inf]]])).
+    assertion(findall(L,state_intervals(happy_with_money(alice),L),[[([4,Tqp],t)]])).
 
-%iteration <
-test(case4):-
-    assertion(findall(L,state_intervals(keep_dropping(bob),L),[[[3,5]]])).
-
-%iteration =
-test(case5):-
-    assertion(findall(L,state_intervals(regular_stare(bob,alice),L),[[[1,5]]])).
-
-%iteration <=
-test(case6):-
-    assertion(findall(L,state_intervals(not_so_regular_stare(alice,bob),L),[])),
-    assertion(findall(L,state_intervals(not_so_regular_stare(bob,alice),L),[[[1,5]]])).
 
 test(query1):-
     assert_input_phenomena(10),
@@ -50,51 +46,50 @@ test(query1):-
     assertion(findall(_,(input_event_instant(_,T),T=<5),[])),
     assertion(findall(_,(input_state_interval(_,[_,Te]),Te=<5),[])).
 
-%iteration
-test(case7):-
-    assertion(findall(L,state_intervals(keep_dropping(bob),L),[[[3,8]]])).
-
 
 test(case8):-
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
     assertion(findall(L,state_intervals(possess(bob,torch),L),[])),
-    assertion(findall(L,state_intervals(possess(bob,coin),L),[[[3,8]]])),
-    assertion(findall(L,state_intervals(possess(bob,wallet),L),[[[6,inf]]])),
-    assertion(findall(L,state_intervals(possess(alice,wallet),L),[[[4,9]]])),
-    assertion(findall(L,state_intervals(possess(alice,flower),L),[[[6,inf]]])),
-    assertion(findall(L,state_intervals(possess(alice,coin),L),[[[9,inf]]])),
-    assertion(findall(L,state_intervals(possess(john, wallet),L),[[[10,inf]]])).
+    assertion(findall(L,state_intervals(possess(bob,coin),L),[[([3,8],t)]])),
+    assertion(findall(L,state_intervals(possess(bob,wallet),L),[[([6,Tqp],t)]])),
+    assertion(findall(L,state_intervals(possess(alice,wallet),L),[[([4,9],t)]])),
+    assertion(findall(L,state_intervals(possess(alice,flower),L),[[([6,Tqp],t)]])),
+    assertion(findall(L,state_intervals(possess(alice,coin),L),[[([9,Tqp],t)]])),
+    assertion(findall(L,state_intervals(possess(john, wallet),L),[[([10,Tqp],t)]])).
 
 test(case9):-
-    assertion(findall(L,state_intervals(happy(bob),L),[[[6,8]]])),
-    assertion(findall(L,state_intervals(happy(alice),L),[[[4,inf]]])),
-    assertion(findall(L,state_intervals(happy(john),L),[[[10,inf]]])).
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
+    assertion(findall(L,state_intervals(happy(bob),L),[[([6,8],t)]])),
+    assertion(findall(L,state_intervals(happy(alice),L),[[([4,Tqp],t)]])),
+    assertion(findall(L,state_intervals(happy(john),L),[[([10,Tqp],t)]])).
 
 test(case10):-
-    assertion(findall(L,state_intervals(sad(bob),L),[[[5,6],[8,inf]]])),
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
+    assertion(findall(L,state_intervals(sad(bob),L),[[([5,6],t),([8,Tqp],t)]])),
     assertion(findall(L,state_intervals(sad(alice),L),[])).
 
 test(case11):-
-    assertion(findall(L,state_intervals(happy_with_money(bob),L),[[[6,8]]])),
-    assertion(findall(L,state_intervals(happy_with_money(alice),L),[[[4,9]]])),
-    assertion(findall(L,state_intervals(happy_with_money(john),L),[[[10,inf]]])).
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
+    assertion(findall(L,state_intervals(happy_with_money(bob),L),[[([6,8],t)]])),
+    assertion(findall(L,state_intervals(happy_with_money(alice),L),[[([4,9],t)]])),
+    assertion(findall(L,state_intervals(happy_with_money(john),L),[[([10,Tqp],t)]])).
 
 test(case12):-
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
     assertion(findall(L,state_intervals(happy_without_money(bob),L),[])),
-    assertion(findall(L,state_intervals(happy_without_money(alice),L),[[[10,inf]]])).
+    assertion(findall(L,state_intervals(happy_without_money(alice),L),[[([10,Tqp],t)]])).
 
 test(case13):-
-    assertion(findall(L,state_intervals(can_eat(bob),L),[[[6,inf]]])).
+    phe_getval(tq,Tq),
+    atom_concat(Tq,'+',Tqp),
+    assertion(findall(L,state_intervals(can_eat(bob),L),[[([6,Tqp],t)]])).
 
 test(case14):-
-    assertion(findall(L,state_intervals(hungry_and_angry(bob),L),[[[6,7],[9,10]]])).
-
-%iteration =
-test(case15):-
-    assertion(findall(L,state_intervals(regular_stare(bob,alice),L),[[[1,9]]])).
-
-%iteration =
-test(case16):-
-    assertion(findall(L,state_intervals(not_so_regular_stare(bob,alice),L),[[[1,9]]])),
-    assertion(findall(L,state_intervals(not_so_regular_stare(alice,bob),L),[[[1,10]]])).
+    assertion(findall(L,state_intervals(hungry_and_angry(bob),L),[[([6,7],t),([9,10],t)]])).
 
 :-end_tests(states).

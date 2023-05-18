@@ -4,728 +4,408 @@
 
 :-discontiguous compute_before_intervals/6.
 
-compute_relation_intervals(meets,FT,A,B,IL,RA,Tc):-compute_meets_intervals(FT,A,B,IL,RA,Tc).
-compute_relation_intervals(overlaps,FT,A,B,IL,RA,Tc):-compute_overlaps_intervals(FT,A,B,IL,RA,Tc).
-compute_relation_intervals(starts,FT,A,B,IL,RA,Tc):-compute_starts_intervals(FT,A,B,IL,RA,Tc).
-compute_relation_intervals(contains,FT,A,B,IL,RB,Tc):-compute_contains_intervals(FT,A,B,IL,RB,Tc).
-compute_relation_intervals(finishes,FT,A,B,IL,Tc):-compute_finishes_intervals(FT,A,B,IL,Tc).
-compute_relation_intervals(equals,FT,A,B,IL):-compute_equals_intervals(FT,A,B,IL).
+compute_relation_intervals(before,A,B,Tq,IL):-compute_before_intervals(A,B,Tq,IL). %
+compute_relation_intervals(meets,A,B,Tq,IL):-compute_arelation_intervals(meets,A,B,Tq,IL). %
+compute_relation_intervals(overlaps,A,B,Tq,IL):-compute_arelation_intervals(overlaps,A,B,Tq,IL). %
+compute_relation_intervals(starts,A,B,Tq,IL):-compute_arelation_intervals(starts,A,B,Tq,IL). %
+compute_relation_intervals(contains,A,B,Tq,IL):-compute_brelation_intervals(contains,A,B,Tq,IL). %
+compute_relation_intervals(finishes,A,B,Tq,IL):-compute_arelation_intervals(finishes,A,B,Tq,IL). %
+compute_relation_intervals(equals,A,B,Tq,IL):-compute_arelation_intervals(equals,A,B,Tq,IL). %
 
 
-%------------------------------------------------------------
-%------------------------------------------------------------
-%computation of before intervals
-%------------------------------------------------------------
-%------------------------------------------------------------
-compute_before_intervals(_,[],_,[],[],_).
-compute_before_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
-    last_ending_temporal_entities([A|R],ALast),
-    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],ALast, IL, NonRedundantA,Tcrit).
+compute_before_intervals(A,B,Tq,I):-
+    compute_before_intervals(A,[],B,Tq,I1),
+    split_true_unknown(I1,It,Iu),
+    tunion(Iu,Iuu),
+    ord_merge(It,Iuu,I).
 
-%------------------------------------------------------------
-%participating phenomena are either states or events
-% end of A is before start of B / A occurs befor B
-% in this case check if there is an interval that also satisfies the above
-% if there is then check again
-% a and b must be contiguous
-compute_before_intervals(d,[A|RL],[B|RR],[[TS,TE]|IL],NonRedundantA,Tcrit):-
-    temporal_information(A,_TSA,TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    lt(TEA,TSB),
-    compute_before_intervals2(d,[A|RL],B,NRL,[TS,TE],AP),
-    add_if_not_redundant(AP,[TS,TE],Tcrit,NonRedundantAL,NonRedundantA),
-    compute_before_intervals(d,NRL,RR,IL,NonRedundantAL,Tcrit).
+%----------- OUTER ----------------
+compute_before_intervals([],_,[],_,[]).
+compute_before_intervals(A,_UBS,[],Tq,I):-
+    Tq2 is Tq + 2,
+    Tq1 is Tq + 1,
+    compute_before_intervals(A,[Tq1],[Tq2,inf],_Ar,Tq,I).
 
-% a ends after b, therefore you can check next a  
-% if a holds in intervals they are disjoint here
-compute_before_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    temporal_information(A,_TSA,TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    geq(TEA,TSB),
-    compute_before_intervals(d,[A|RL],RR,IL,NonRedundantA,Tcrit).
+compute_before_intervals(A,UBS,[(B,t)|Rb], Tq, I):-
+    compute_before_intervals(A, UBS, B, Ar, Tq, Ic),
+    (start_same(B,Rb) -> compute_before_intervals(A, UBS, Rb, Tq, Ir) ; compute_before_intervals(Ar, UBS, Rb, Tq, Ir)),
+    append(Ic,Ir,Is),
+    sort(Is,I).
+compute_before_intervals(A,UBS,[([TS,_],u)|Rb], Tq, I):-
+    compute_before_intervals(A, [TS|UBS], Rb, Tq , I).
 
-%Check if the next interval of a satisfies the condition
-%if yes then check it as well
-compute_before_intervals2(d,[_|RL],B,NIL,I,AP):-
-    RL=[A2|_],
-    temporal_information(A2,_TSA2,TEA2,_),
-    temporal_information(B,TSB,_TEB,_),
-    lt(TEA2,TSB),
-    compute_before_intervals2(d,RL,B,NIL,I,AP).
+%-------------- INNER ----------------------
 
-% if the next interval does not satisfy the condition
-% or there isn't another interval
-% then create the interval for a before b
-compute_before_intervals2(d,[A|RL],B,RL,[TSA,TEB],A):-
-    temporal_information(A,TSA,_TEA,_),
-    temporal_information(B,TSB,TEB,_),
-    (
+% assuming b true
+compute_before_intervals(A,UBS,[TSb,TEb], ARemaining, Tq, I):-
+    tur_before(A,TSb,Tq,RSBeforeTrueI,SBeforeUnknownI,ARemaining),
+    % if RSBeforeTrueI = RSBeforeUnknownI = [] -> use next Bi
+    % if RSBeforeTrueI = [], RSBeforeUnknownI /= [] -> create unknown intervals 
+    % if RSBeforeTrueI /= [], RSBeforeUnknownI = [] -> create true intervals 
+    % if RSBeforeTrueI /= [], RSBeforeUnknownI /= [] -> check whether true or unknown status  
+    ((RSBeforeTrueI = [],SBeforeUnknownI = []) -> I=[] ;(
+    (RSBeforeTrueI \= [] -> 
         (
-         RL=[A2|_],
-         temporal_information(A2,_TSA2,TEA2,_),
-         geq(TEA2,TSB),!
+            sort(0,@>,RSBeforeTrueI,BeforeTrueI),
+            % find the one 
+            BeforeTrueI=[[TEx,TSx]|_]
         );
         (
-         RL=[],!
+            BeforeTrueI = [],
+            TEx=0,TSx=TSb
+        )
+    ),
+    TSb1 is TSb-1,
+    ((member(Tu, UBS),Tu > TEx, Tu < TSb) -> Vt = u ; Vt = t),
+    sublist_intervals_starting(BeforeTrueI,TEx,LBeforeTrueI),
+    %if exists an interval that starts earlier and finishes later (possibly) than TEx
+    %then unknown interval should be created
+    (
+        setof([TSa,TEa],(int_member([TSa,TEa], SBeforeUnknownI, TSb1), TEa >= TEx),BeforeUnknownI) ->  
+        (
+            (
+                %if below true create an interval that has unknown status and starts
+                % at the earliest TSau that satisfies constraints below and above
+                (member([TS,_],BeforeUnknownI),TS < TSx, TEx \= TSb1) ->            
+                (
+                    I = [([TS,TEb],u)],!
+                )
+                ;
+                (                 
+                % if not create Vt (check also if there are unknown from b) intervals,
+                % with the true intervals of A and unknown intervals
+                % with the unknown intervals of A that satisfy the before constraints
+                    findall(([TS,TEb],Vt), (member([_,TS],LBeforeTrueI)),I1),
+                    setof(([TS,TEb],u), (member([TS,_],BeforeUnknownI)),[Iu|_]),
+                    append(I1,[Iu],Ius),
+                    sort(Ius,I),!
+                )
+            )
+         )
+         ;
+         (
+            % if no unknown interval create true intervals
+            findall(([TS,TEb],Vt), member([TEx,TS],LBeforeTrueI),I1),
+            sort(I1,I)
+         )
+    ))).
+
+% a relation -> for each b process a
+compute_arelation_intervals(Relation, A, B, Tq, I):-
+    compute_arelation_intervals1(Relation, A,B,Tq,I1),
+    split_true_unknown(I1,It,Iu),
+    tunion(Iu,Iuu),
+    ord_merge(It,Iuu,I).
+
+%----------- OUTER ----------------
+compute_arelation_intervals1(_,[],[],_,[]):-!.
+compute_arelation_intervals1(_,[],_B,_,[]):-!.
+compute_arelation_intervals1(Relation, A, [], Tq, I):-!,
+    Tq1 is Tq + 1,
+    compute_arelation_intervals1(Relation,A,([Tq1,inf],u),_Ar,Tq,I).
+
+compute_arelation_intervals1(Relation, A,[(B,V)|Rb], Tq, I):-
+    compute_arelation_intervals1(Relation, A, (B,V), Ar, Tq, Ic),
+    compute_arelation_intervals1(Relation, Ar, Rb, Tq, Ir),
+    ord_merge(Ic,Ir,I).
+
+%-------------- INNER ----------------------
+
+% assuming b true
+compute_arelation_intervals1(Relation, A, ([TSb,TEb],V), ARemaining, Tq, I):-
+    % if ARelationTrueI = ARelationUnknownI = [] -> use next Bi
+    % if ARelationTrueI = [], ARelationUnknownI /= [] -> create unknown intervals 
+    % if ARelationTrueI /= [], ARelationUnknownI = [] -> create true intervals 
+    % if ARelationTrueI /= [], ARelationUnknownI /= [] -> create both
+    tur(Relation, A,([TSb,TEb],V),Tq,ARelationTrueI,ARelationUnknownI,ARemaining),
+    (
+        (ARelationTrueI = [],ARelationUnknownI = []) -> I=[] ;
+        (
+            e_and(t,V,Vt),
+            (( 
+              member(Relation, [meets,overlaps]), !,
+              findall(([TS,TEb],Vt), member([TS,_],ARelationTrueI), TI),
+              (ARelationUnknownI = [] -> UI =[] ; (ARelationUnknownI = [[TS,_]|_], UI=[([TS,TEb],u)]))
+            );
+            ( 
+                Relation = equals,!,
+                findall(([TS,TE],Vt), (member([TSi,TEi],ARelationTrueI),
+                                            max(TSi,TSb,TS),
+                                            min(TEi,TEb,TE)), TI),
+                (
+                    ARelationUnknownI = [] -> 
+                        UI =[] ; 
+                        (   
+                            ARelationUnknownI = [[TSi,TEi]|_],
+                            max(TSi,TSb,TS),
+                            min(TEi,TEb,TE),
+                            UI=[([TS,TE],u)]
+                        )
+                )
+            );
+            (
+                (Relation = starts; Relation = finishes), !,
+                (ARelationTrueI \= [] -> TI=[([TSb,TEb],t)] ; TI = []),
+                (
+                    TI=[]-> (
+                        ARelationUnknownI = [] -> 
+                            UI =[] ; 
+                            (   
+                                Relation = equals -> 
+                                    (
+                                        ARelationUnknownI = [[TSi,_]|_],
+                                        max(TSi,TSb,TS),
+                                        UI=[([TS,TEb],u)]
+                                    );
+                                    (
+                                        findall(([TSo,TEo],u),
+                                            (
+                                                member([_TSx,TEx],ARelationUnknownI),
+                                                %max(TSx,TSb,TSo),
+                                                TSo=TSb,
+                                                min(TEx,TEb,TEo),TSo < TEo
+                                            ),UI)
+                                    )
+                            )
+                    ); (UI=[],true)
+                )
+            )), 
+            ord_merge(TI,UI,IS),
+            sort(IS,I)
         )
     ).
 
-%compute_before_intervals2(d,[A|[]],B,[],[TSA,TEB],A):-
-    %temporal_information(A,TSA,_TEA,_),
-    %temporal_information(B,_TSB,TEB,_).
 
-
-%-----------------------------------------------------------
-%participating phenomena involve dynamic phenomena
-compute_before_intervals(nd,[A|RL],[B|RR],I,NonRedundantA,T):-
-    get_same_ts_sublist(B,RR,BS,NRR),
-    compute_before_intervals2(nd,[A|RL],[B|BS],[],NRL,II,NonRedundantAII,T),
-    ((%if there is only one interval of b starting at t and ending unk
-      %then A intervals should also be kept for other detections since that interval
-      %may not happen. If it does happen results will be updated.
-      [B|BS]=[BI],temporal_information(BI,_,unk,_),!,
-      compute_before_intervals(nd,[A|RL],NRR,IL,NonRedundantAIL,T)
-      )
-      ;
-      (
-      %if not in the above case then we can safely use ramaining A intervals
-      compute_before_intervals(nd,NRL,NRR,IL,NonRedundantAIL,T)
-      )
-    ),
-    ord_merge(II,IL,I),
-    ord_merge(NonRedundantAII,NonRedundantAIL,NonRedundantA).
-
-
-
-%all time entities of A were iterated; create intervals
-compute_before_intervals2(nd,[],[B|BI],CLOSR,[],I,NonRedundantA,T):-
-    create_intervals(keep,[B|BI],[B|BI],CLOSR,I,NonRedundantA,T).
-
-
-compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,NRL,I,NonRedundantA,T):-
-    temporal_information(A,_TSA,TEA,V), %V contains the TSBs that this interval was matched in a previous query
-    temporal_information(B,TSB,_TEB,_),
-    V\=[],
-    member(TSB,V),!, 
-    ((CLOS=[C|_],
-      temporal_information(C,_TSC,TEC,_),
-      TEC=TEA);
-      (CLOS=[])),!,
-    append(CLOS,[A],CLOSN),
-    compute_before_intervals2(nd,RL,[B|RR],CLOSN,NRL,I,NonRedundantA,T).
-compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,NRL,I,NonRedundantA,T):-
-    temporal_information(A,_TSA,_TEA,V),
-    temporal_information(B,TSB,_TEB,_),
-    V\=[],
-    \+((member(TSB,V))),!, %if B not member of V A
-    compute_before_intervals2(nd,RL,[B|RR],CLOS,NRL,I,NonRedundantA,T).
-
-%current interval of A satisfies the conditions and is closest
-compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,NRL,I,NonRedundantA,T):-
-    temporal_information(A,_TSA,TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    lt(TEA,TSB),
-    ((CLOS=[C|_],
-      temporal_information(C,_TSC,TEC,_),
-      TEC=TEA);
-      (CLOS=[])),!,
-    append(CLOS,[A],CLOSN),
-    compute_before_intervals2(nd,RL,[B|RR],CLOSN,NRL,I,NonRedundantA,T).
-
-%current interval of A satisfies the constraints and is NEW closest
-compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,NRL,I,NonRedundantA,T):-
-    temporal_information(A,_TSA,TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    lt(TEA,TSB),
-    CLOS=[C|_],
-    temporal_information(C,_TSC,TEC,_),
-    lt(TEC,TEA),!,
-    compute_before_intervals2(nd,RL,[B|RR],[A],NRL,I,NonRedundantA,T).
-
-%current interval of A satisfies the constraints and but IS NOT closest
-compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,NRL,I,NonRedundantA,T):-
-    temporal_information(A,_TSA,TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    lt(TEA,TSB),
-    CLOS=[C|_],
-    temporal_information(C,_TSC,TEC,_),
-    gt(TEC,TEA),!,
-    compute_before_intervals2(nd,RL,[B|RR],CLOS,NRL,I,NonRedundantA,T).
-
-%current interval of A does not satisfy the constraints
-compute_before_intervals2(nd,[A|RL],[B|RR],CLOS,[A|NRL],I,NonRedundantA,T):-
-    temporal_information(A,_TSA,TEA,_),
-    temporal_information(B,TSB,_TEB,_),
-    geq(TEA,TSB),!,
-    compute_before_intervals2(nd,RL,[B|RR],CLOS,NRL,I,NonRedundantA,T).
-
-
-%------------------------------------------------------------
-%------------------------------------------------------------
-%computation of the intervals of a meets relation
-%------------------------------------------------------------
-%------------------------------------------------------------
-compute_meets_intervals(_,[],_,[],[],_):-!.
-compute_meets_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
-    unk_or_inf_temporal_entities([A|R],AUI),
-    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
-
-%------------------------------------------------------------
-%participating phenomena are states
-%satisfied conditions
-compute_meets_intervals(d,[A|RL],[B|RR],[[TSA,TEB]|IL],NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    TEA=TSB,!,
-    add_if_not_redundant(A,[TSA,TEB],Tcrit,NonRedundantAL,NonRedundantA),
-    compute_meets_intervals(d,RL,RR,IL,NonRedundantAL,Tcrit).
-%skip b
-compute_meets_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    temporal_information(A,_TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    gt(TEA,TSB),!,
-    compute_meets_intervals(d,[A|RL],RR,IL,NonRedundantA,Tcrit).
-%skip a
-compute_meets_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    temporal_information(A,_TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    lt(TEA,TSB),!,
-    compute_meets_intervals(d,RL,[B|RR],IL,NonRedundantA,Tcrit).
-
-%participating phenomena may be dynamic phenomenona
-compute_meets_intervals(nd,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    get_same_ts_sublist(B, RR, SBL, NRR),
-    compute_meets_intervals2(nd,[A|RL],[B|SBL],NRL,[],IX,NonRedundantAII,Tcrit),
-    compute_meets_intervals(nd,NRL,NRR,IY,NonRedundantAIL,Tcrit),
-    ord_merge(IX, IY, IL),
-    ord_merge(NonRedundantAII, NonRedundantAIL, NonRedundantA).
-
-compute_meets_intervals2(nd, [A|RL], [B|RR], NRL, CORS, IL, NonRedundantA, Tcrit):-
-    temporal_information(A,_TSA,T,_V1),
-    temporal_information(B,T,_TEB,_V2),
-    append(CORS,[A],NCORS),
-    compute_meets_intervals2(nd, RL, [B|RR], NRL, NCORS, IL,NonRedundantA,Tcrit).
-
-%skip a
-compute_meets_intervals2(nd, [A|RL], [B|RR], NRL, CORS, IL, NonRedundantA, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    lt(TEA,TSB),!,
-    compute_meets_intervals2(nd, RL, [B|RR], NRL, CORS, IL, NonRedundantA, Tcrit).
-
-%keep a
-compute_meets_intervals2(nd,[A|RL],[B|RR], [A|NRL], CORS, IL, NonRedundantA, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    gt(TEA, TSB),
-    compute_meets_intervals2(nd, RL, [B|RR], NRL, CORS, IL, NonRedundantA, Tcrit).
-
-%create intervals
-compute_meets_intervals2(nd,[A|RL],[B|RR], [A|RL], CORS, IL,NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,_TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    gt(TSA,TSBM1),
-    create_intervals(keepnot,[B|RR], [B|RR], CORS, IL, NonRedundantA, Tcrit).
-
-compute_meets_intervals2(nd,[],[B|RR], [], CORS, IL, NonRedundantA, Tcrit):-
-    create_intervals(keepnot,[B|RR], [B|RR], CORS, IL, NonRedundantA, Tcrit).
-
-%------------------------------------------------------------
-%------------------------------------------------------------
-%computation of the intervals of an overlaps  relation
-%------------------------------------------------------------
-%------------------------------------------------------------
-compute_overlaps_intervals(_,[],_,[],[],_):-!.
-compute_overlaps_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
-    unk_or_inf_temporal_entities([A|R],AUI),
-    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
-
-
-%------------------------------------------------------------
-%participating phenomena are states
-%partially satisfied conditions
-compute_overlaps_intervals(d,[A|RL],[B|RR],[[TSA,unk]|IL],NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),
-    lt(TSA,TSB),gt(TEA,TSB),!,
-    % no need to retain information here; either unk or inf
-    compute_overlaps_intervals(d,RL,RR,IL,NonRedundantA,Tcrit).
-%satisfied partially and completely **** in the case the ending instant
-%of b is unk, the code works as it is
-compute_overlaps_intervals(d,[A|RL],[B|RR],[[TSA,TEB]|IL],NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    lt(TSA,TSB),gt(TEA,TSB),lt(TEA,TEB),!,
-    add_if_not_redundant(A,[TSA,TEB],Tcrit,NonRedundantAL,NonRedundantA),
-    compute_overlaps_intervals(d,RL,RR,IL,NonRedundantAL,Tcrit).
-%skip a
-compute_overlaps_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    (leq(TEA,TSB) ; (gt(TSA,TSB),lt(TEA,TEB))),!,
-    compute_overlaps_intervals(d,RL,[B|RR],IL,NonRedundantA,Tcrit).
-%skip b
-compute_overlaps_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    temporal_information(A,_TSA,TEA,_V1),
-    temporal_information(B,_TSB,TEB,_V2),
-    geq(TEA,TEB),!,
-    compute_overlaps_intervals(d,[A|RL],RR,IL,NonRedundantA,Tcrit).
-
-%participating phenomena may be dynamic phenomenona
-compute_overlaps_intervals(nd,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    compute_overlaps_intervals2(nd,[A|RL],B,NRL,[],IX,NonRedundantAII,Tcrit),
-    compute_overlaps_intervals(nd,NRL,RR,IY,NonRedundantAIL,Tcrit),
-    ord_merge(IX,IY,IL),
-    ord_merge(NonRedundantAII,NonRedundantAIL,NonRedundantA).
-
-%partial satisfaction **** both unk/inf
-compute_overlaps_intervals2(nd, [A|RL], B, [A|NRL], CORS, IL, NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),
-    lt(TSA,TSB),gt(TEA,TSB),!,
-    append(CORS,[(u,A)],NCORS), %remember that this is A was in an incomplete detection
-    compute_overlaps_intervals2(nd, RL, B, NRL, NCORS, IL, NonRedundantA, Tcrit).
-
-%partial and complete satisfaction **** same as in d case
-compute_overlaps_intervals2(nd, [A|RL], B, [A|NRL], CORS, IL, NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    lt(TSA,TSB),gt(TEA,TSB),lt(TEA,TEB),!,
-    append(CORS,[A],NCORS),
-    compute_overlaps_intervals2(nd, RL, B, NRL, NCORS, IL, NonRedundantA, Tcrit).
-
-%skip a for future b
-compute_overlaps_intervals2(nd, [A|RL], B, NRL, CORS, IL, NonRedundantA, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA, TSBM1),
-    leq(TEA, TSB),!,
-    compute_overlaps_intervals2(nd, RL, B, NRL, CORS, IL, NonRedundantA, Tcrit).
-
-%keep a for future b
-compute_overlaps_intervals2(nd,[A|RL], B, [A|NRL], CORS, IL, NonRedundantA, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    gt(TEA,TSB),!,% TEA>=TEB,!,
-    compute_overlaps_intervals2(nd, RL, B, NRL, CORS, IL, NonRedundantA, Tcrit).
-
-compute_overlaps_intervals2(nd,[A|RL],B, [A|RL], CORS, IL, NonRedundantA, Tcrit):-
-    temporal_information(A,TSA, _TEA,_V1),
-    temporal_information(B,TSB, _TEB,_V2),
-    TSBM1 is TSB-1,
-    gt(TSA, TSBM1),!,
-    create_intervals(keepnot,[B], [B], CORS, IL, NonRedundantA, Tcrit).
-
-compute_overlaps_intervals2(nd,[],B, [], CORS, IL, NonRedundantA, Tcrit):-
-    create_intervals(keepnot,[B], [B], CORS, IL, NonRedundantA, Tcrit).
-
-%------------------------------------------------------------
-%------------------------------------------------------------
-%computation of the intervals of a finishes  relation
-%------------------------------------------------------------
-%------------------------------------------------------------
-compute_finishes_intervals(_,[],[],[],_):-!.
-compute_finishes_intervals(_,[],[B|R],IL,Tcrit):-!,
-    unk_or_inf_temporal_entities([B|R],BUI),
-    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],BUI, IL, _,Tcrit).
-compute_finishes_intervals(_,[_|_],[],[],_):-!.
-
-
-%------------------------------------------------------------
-%participating phenomena are states
-%
-%partially satisfied conditions
-compute_finishes_intervals(d,[A|RL],[B|RR],[[TSB,unk]|IL], Tcrit):-
-    temporal_information(A,TSA, TEA,_V1),
-    temporal_information(B,TSB, TEB,_V2),
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),
-    gt(TSA,TSB),!,
-    compute_finishes_intervals(d,RL,RR,IL, Tcrit).
-%satisfaction
-compute_finishes_intervals(d,[A|RL],[B|RR],[B|IL], Tcrit):-
-    temporal_information(A,TSA, TEA,_V1),
-    temporal_information(B,TSB, TEB,_V2),
-    ((lt(TSA,TEA),
-      gt(TSA,TSB),TEA=TEB);
-      (TSA=TEA,TEA=TEB)),!,
-    compute_finishes_intervals(d,RL,RR,IL, Tcrit).
-
-%skip a
-compute_finishes_intervals(d,[A|RL],[B|RR],IL, Tcrit):-
-    temporal_information(A,_TSA, TEA,_V1),
-    temporal_information(B,_TSB, TEB,_V2),
-    leq(TEA,TEB),!,
-    compute_finishes_intervals(d,RL,[B|RR],IL, Tcrit).
-
-%skip b
-compute_finishes_intervals(d,[A|RL],[B|RR],IL, Tcrit):-
-    temporal_information(A,_TSA, TEA,_V1),
-    temporal_information(B,_TSB, TEB,_V2),
-    gt(TEA,TEB),
-    compute_finishes_intervals(d,[A|RL],RR,IL, Tcrit).
-
-%participating phenomena may be dynamic phenomenona
-compute_finishes_intervals(nd,[A|RL],[B|RR],IL, Tcrit):-
-    compute_finishes_intervals2(nd,[A|RL],B,NRL,[],IX, Tcrit),
-    compute_finishes_intervals(nd,NRL,RR,IY, Tcrit),
-    ord_merge(IX,IY,IL).
-
-%satisfaction
-compute_finishes_intervals2(nd, [A|RL], B, [A|NRL], CORS, IL, Tcrit):-
-    temporal_information(A, TSA, TEA,_V1),
-    temporal_information(B, TSB, TEB,_V2),
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),
-    gt(TSA,TSB),!,
-    append(CORS,[(u,A)],NCORS),
-    compute_finishes_intervals2(nd, RL, B, NRL, NCORS,  IL, Tcrit).
-
-compute_finishes_intervals2(nd, [A|RL], B, [A|NRL], CORS, IL, Tcrit):-
-    temporal_information(A,TSA, TEA,_V1),
-    temporal_information(B,TSB, TEB,_V2),
-    ((lt(TSA,TEA),
-      gt(TSA,TSB),TEA=TEB);
-      (TSA=TEA,TEA=TEB)),!,
-    append(CORS,[A],NCORS),
-    compute_finishes_intervals2(nd, RL, B, NRL, NCORS, IL, Tcrit).
-
-%skip a for future b
-compute_finishes_intervals2(nd, [A|RL], B, NRL, CORS, IL, Tcrit):-
-    temporal_information(A,TSA, TEA, _V1),
-    temporal_information(B,TSB, _TEB, _V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    leq(TEA,TSB),!,
-    compute_finishes_intervals2(nd, RL, B, NRL, CORS, IL, Tcrit).
-
-%keep a for future b
-compute_finishes_intervals2(nd,[A|RL], B, [A|NRL], CORS, IL, Tcrit):-
-    temporal_information(A,TSA, TEA, _V1),
-    temporal_information(B,TSB, _TEB, _V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    gt(TEA,TSB),!,
-    compute_finishes_intervals2(nd, RL, B, NRL, CORS, IL, Tcrit).
-
-compute_finishes_intervals2(nd,[A|RL], B, [A|RL], CORS, IL, Tcrit):-
-    temporal_information(A,TSA, _TEA, _V1),
-    temporal_information(B,TSB, _TEB, _V2),
-    TSBM1 is TSB-1,
-    gt(TSA, TSBM1),!,
-    create_intervals(keepnot,[B], [B], CORS, IL, _, Tcrit).
-    %((CORS\=[],!,IL=[[TSB,TEB]]);
-     %(CORS=[],IL=[])).
-
-compute_finishes_intervals2(nd,[],B, [], CORS, IL, Tcrit):-
-    create_intervals(keepnot,[B], [B], CORS, IL, _, Tcrit).
-
-
-%------------------------------------------------------------
-%------------------------------------------------------------
-%computation of the intervals of a starts relation
-%------------------------------------------------------------
-%------------------------------------------------------------
-compute_starts_intervals(_,[],_,[],[],_):-!.
-compute_starts_intervals(_,[_|_],[],[],[],_):-!.
-
-%------------------------------------------------------------
-%participating phenomena are states
-%partially satisfied conditions
-compute_starts_intervals(d,[A|RL],[B|RR],[[TSA,unk]|IL],NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    TSA=TSB,
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),!,
-    compute_starts_intervals(d,RL,RR,IL,NonRedundantA,Tcrit).
-
-%satisfied conditions
-compute_starts_intervals(d,[A|RL],[B|RR],[B|IL],NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    ((lt(TSA,TEA),
-      TSA=TSB,lt(TEA,TEB));
-      (TSA=TEA,TEA=TSB)),!,
-    add_if_not_redundant(A,[TSB,TEB],Tcrit,NonRedundantAL,NonRedundantA),
-    compute_starts_intervals(d,RL,RR,IL,NonRedundantAL,Tcrit).
-
-%skip a
-compute_starts_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    temporal_information(A,_TSA,TEA,_V1),
-    temporal_information(B,_TSB,TEB,_V2),
-    leq(TEA,TEB),!,
-    compute_starts_intervals(d,RL,[B|RR],IL,NonRedundantA,Tcrit).
-
-%skip b
-compute_starts_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    temporal_information(A,_TSA,TEA,_V1),
-    temporal_information(B,_TSB,TEB,_V2),
-    gt(TEA, TEB),!,
-    compute_starts_intervals(d,[A|RL],RR,IL,NonRedundantA,Tcrit).
-
-%participating phenomena may be dynamic phenomenona
-compute_starts_intervals(nd,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
-    compute_starts_intervals2(nd,[A|RL],B,NRL,[],IX,NonRedundantAII,Tcrit),
-    compute_starts_intervals(nd,NRL,RR,IY,NonRedundantAIL,Tcrit),
-    ord_merge(IX,IY,IL),
-    ord_merge(NonRedundantAII,NonRedundantAIL,NonRedundantA).
-
-%partial satisfaction
-compute_starts_intervals2(nd, [A|RL], B, [A|NRL], CORS, IL, NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    TSA=TSB,
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),!,
-    append(CORS,[(u,A)],NCORS),
-    compute_starts_intervals2(nd, RL, B, NRL, NCORS, IL, NonRedundantA,Tcrit).
-
-%satisfaction
-compute_starts_intervals2(nd, [A|RL], B, [A|NRL], CORS, IL, NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    ((lt(TSA,TEA),
-      TSA=TSB,lt(TEA,TEB));
-      (TSA=TEA,TEA=TSB)),!,
-    append(CORS,[A],NCORS),
-    compute_starts_intervals2(nd, RL, B, NRL, NCORS,  IL, NonRedundantA,Tcrit).
-
-%skip a for future b
-compute_starts_intervals2(nd, [A|RL], B, NRL, CORS, IL, NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    leq(TEA,TSB),!,
-    compute_starts_intervals2(nd, RL, B, NRL, CORS, IL, NonRedundantA,Tcrit).
-
-%keep a for future b
-compute_starts_intervals2(nd,[A|RL],B, [A|NRL], CORS, IL, NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA, TSBM1),
-    gt(TEA, TSB),!,
-    compute_starts_intervals2(nd, RL, B, NRL, CORS, IL, NonRedundantA,Tcrit).
-
-compute_starts_intervals2(nd,[A|RL], B, [A|RL], CORS,  IL,  NonRedundantA,Tcrit):-
-    temporal_information(A,TSA,_TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    gt(TSA,TSBM1),!,
-    create_intervals(keepnot,[B], [B], CORS, IL, NonRedundantA, Tcrit).
-
-compute_starts_intervals2(nd,[], B, [], CORS,  IL, NonRedundantA,Tcrit):-
-    create_intervals(keepnot,[B], [B], CORS, IL, NonRedundantA, Tcrit).
-
-%------------------------------------------------------------
-%------------------------------------------------------------
-%computation of the intervals of a equals relation
-%------------------------------------------------------------
-%------------------------------------------------------------
-compute_equals_intervals(_,[],_,[]):-!.
-compute_equals_intervals(_,_,[],[]):-!.
-
-%------------------------------------------------------------
-%participating phenomena are states
-%partially satisfied conditions
-compute_equals_intervals(d,[I1|RL],[I2|RR],[[TS,unk]|IL]):-
-    temporal_information(I1,TS,TE1,_V1),
-    temporal_information(I2,TS,TE2,_V2),
-    is_inf_unk(TE1),
-    is_inf_unk(TE2),!,
-    compute_equals_intervals(d,RL,RR,IL).
-
-%satisfied conditions
-compute_equals_intervals(d,[I1|RL],[I2|RR],[[TS,TE]|IL]):-
-    temporal_information(I1,TS,TE,_V1),
-    temporal_information(I2,TS,TE,_V2),
-    \+is_inf_unk(TE),!,
-    compute_equals_intervals(d,RL,RR,IL).
-
-%skip a
-compute_equals_intervals(d,[I1|RL],[I2|RR],IL):-
-    temporal_information(I1,TSA,TEA,_V1),
-    temporal_information(I2,TSB,TEB,_V2),
-    \+((TSA=TSB,TEA=TEB)),
-    leq(TEA,TEB),!,
-    compute_equals_intervals(d,RL,[I2|RR],IL).
-
-%skip b
-compute_equals_intervals(d,[I1|RL],[I2|RR],IL):-
-    temporal_information(I1,_TSA,TEA,_V1),
-    temporal_information(I2,_TSB,TEB,_V2),
-    gt(TEA,TEB),
-    compute_equals_intervals(d,[I1|RL],RR,IL).
-
-%participating phenomena may be dynamic phenomenona
-compute_equals_intervals(nd,[A|RL],[B|RR],IL):-
-    compute_equals_intervals2(nd,[A|RL],B,NRL,[],IX),
-    compute_equals_intervals(nd,NRL,RR,IY),
-    ord_merge(IX,IY,IL).
-
-%partial satisfaction validity cannot be determined
-compute_equals_intervals2(nd, [I1|RL], I2, RL, _CORS, [[TS,unk]]):-
-    temporal_information(I1,TS,TE1,_V1),
-    temporal_information(I2,TS,TE2,_V2),
-    is_inf_unk(TE1),is_inf_unk(TE2),!.
-
-%satisfaction ---validity can be determined
-compute_equals_intervals2(nd, [I1|RL], I2, RL, _CORS, [[TS,TE]]):-
-    temporal_information(I1,TS,TE,_V1),
-    temporal_information(I2,TS,TE,_V2),
-    \+is_inf_unk(TE),!.
-
-%skip a for future b
-compute_equals_intervals2(nd, [I1|RL], I2, NRL, CORS, IL):-
-    temporal_information(I1,TSA,TEA,_V1),
-    temporal_information(I2,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    leq(TEA, TSB),!,
-    compute_equals_intervals2(nd, RL, I2, NRL, CORS, IL).
-
-%keep a for future b
-% ---------
-% -----
-compute_equals_intervals2(nd,[I1|RL], I2, [I1|NRL], CORS, IL):-
-    temporal_information(I1,TSA,TEA,_V1),
-    temporal_information(I2,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    gt(TEA, TSB),!,
-    compute_equals_intervals2(nd, RL, I2, NRL, CORS, IL).
-
-compute_equals_intervals2(nd,[I1|RL], I2, [I1|RL], _CORS, []):-
-    temporal_information(I1,TSA,_TEA,_V1),
-    temporal_information(I2,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    gt(TSA,TSBM1),!.
-
-compute_equals_intervals2(nd,[],[_|_RR], [], _CORS, []).
-
-
-%------------------------------------------------------------
-%------------------------------------------------------------
-%computation of the intervals of a contains relation
-%------------------------------------------------------------
-%------------------------------------------------------------
-compute_contains_intervals(_,[],_,[],[],_):-!.
-compute_contains_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-!,
-    unk_or_inf_temporal_entities([A|R],AUI),
-    create_intervals(keepnot,[[unk,unk]],[[unk,unk]],AUI, IL, NonRedundantA,Tcrit).
-
-%------------------------------------------------------------
-%participating phenomena are states/events (b)
-%satisfied conditions
-compute_contains_intervals(d,[A|RL],[B|RR],[[TSA,unk]|IL],NonRedundantB,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),
-    lt(TSA,TSB),!,
-    %no need to add them in non redundant
-    compute_contains_intervals(d,RL,RR,IL,NonRedundantB,Tcrit).
-
-compute_contains_intervals(d,[A|RL],[B|RR],[A|IL],NonRedundantB,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    lt(TSA,TSB),gt(TEA,TEB),!,
-    add_if_not_redundant(B,A,Tcrit,NonRedundantBL,NonRedundantB),
-    compute_contains_intervals(d,RL,RR,IL,NonRedundantBL,Tcrit).
-
-
-%skip a
-compute_contains_intervals(d,[A|RL],[B|RR],IL,NonRedundantB,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    \+((lt(TSA,TSB),gt(TEA,TEB))),
-    leq(TEA,TEB),!,
-    compute_contains_intervals(d,RL,[B|RR],IL,NonRedundantB,Tcrit).
-
-%skip b
-compute_contains_intervals(d,[A|RL],[B|RR],IL,NonRedundantB,Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    \+((lt(TSA,TSB),gt(TEA,TEB))),
-    gt(TEA,TEB),!,
-    compute_contains_intervals(d,[A|RL],RR,IL,NonRedundantB,Tcrit).
-
-%participating phenomena may be dynamic phenomenona
-compute_contains_intervals(nd,[A|RL],[B|RR],IL,NonRedundantB,Tcrit):-
-    compute_contains_intervals2(nd,[A|RL],B,NRL,[],IX,NonRedundantBII,Tcrit),
-    compute_contains_intervals(nd,NRL,RR,IY,NonRedundantBIL,Tcrit),
-    ord_merge(IX,IY,IL),
-    ord_merge(NonRedundantBII,NonRedundantBIL,NonRedundantB).
-
-%partial satisfaction case a
-compute_contains_intervals2(nd, [A|RL], B, NRL, CORS, IL, NonRedundantB, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    is_inf_unk(TEA),
-    is_inf_unk(TEB),
-    lt(TSA,TSB),!,
-    append(CORS,[[TSA,unk]],NCORS),
-    compute_contains_intervals2(nd,RL,B, NRL, NCORS, IL, NonRedundantB, Tcrit).
-%partial satisfaction case b
-compute_contains_intervals2(nd, [A|RL], B, NRL, CORS, IL, NonRedundantB, Tcrit):-
-    temporal_information(A,TSA,unk,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    \+is_inf_unk(TEB),
-    lt(TSA,TSB),!,
-    append(CORS,[[TSA,unk]],NCORS),
-    compute_contains_intervals2(nd,RL,B, NRL, NCORS, IL, NonRedundantBL, Tcrit),
-    add_if_not_redundant(B,[TSA,unk],Tcrit,NonRedundantBL,NonRedundantBZ),
-    ((NonRedundantBZ=[NRB|_],!,NonRedundantB=[NRB]);
-     (NonRedundantBZ=[],NonRedundantB=[])).
-
-%satisfaction
-compute_contains_intervals2(nd, [A|RL], B, NRL, CORS, IL, NonRedundantB, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,TEB,_V2),
-    lt(TSA,TSB),gt(TEA,TEB),!,
-    append(CORS,[A],NCORS),
-    compute_contains_intervals2(nd,RL,B, NRL, NCORS, IL, NonRedundantBL, Tcrit),
-    add_if_not_redundant(B,A,Tcrit,NonRedundantBL,NonRedundantBZ),
-    ((NonRedundantBZ=[NRB|_],!,NonRedundantB=[NRB]);
-     (NonRedundantBZ=[],NonRedundantB=[])).
-
-
-%skip a for future b
-compute_contains_intervals2(nd, [A|RL], B, NRL, CORS, IL, NonRedundantB, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    leq(TEA,TSB),!,
-    compute_contains_intervals2(nd, RL, B, NRL, CORS, IL, NonRedundantB, Tcrit).
-
-%keep a for future b
-compute_contains_intervals2(nd,[A|RL],B, [A|NRL], CORS, IL, NonRedundantB, Tcrit):-
-    temporal_information(A,TSA,TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    leq(TSA,TSBM1),
-    gt(TEA,TSB),!,
-    compute_contains_intervals2(nd, RL, B, NRL, CORS, IL, NonRedundantB, Tcrit).
-
-compute_contains_intervals2(nd,[A|RL],B, [A|RL], CORS, CORS,  [], _):-
-    temporal_information(B,TSA,_TEA,_V1),
-    temporal_information(B,TSB,_TEB,_V2),
-    TSBM1 is TSB-1,
-    gt(TSA,TSBM1),!.
-
-compute_contains_intervals2(nd,[],_, [], CORS, CORS, [], _).
+% b relation -> for each a process b
+compute_brelation_intervals(Relation, A,B,Tq,I):-
+    compute_brelation_intervals1(Relation, B,A,Tq,I1),
+    split_true_unknown(I1,It,Iu),
+    tunion(Iu,Iuu),
+    ord_merge(It,Iuu,I).
+
+%----------- OUTER ----------------
+compute_brelation_intervals1(_,[],[],_,[]):-!.
+compute_brelation_intervals1(_,_,[],_,[]):-!.
+compute_brelation_intervals1(Relation,[],[(B,V)|Rb],Tq,I):-!,
+    Tq1 is Tq + 1,
+    compute_brelation_intervals1(Relation,[([Tq1,inf],u)],[(B,V)|Rb],Tq,I).
+
+
+compute_brelation_intervals1(Relation,A,[(B,V)|Rb], Tq, I):-
+    compute_brelation_intervals1(Relation,A, (B,V), Ar, Tq, Ic),
+    compute_brelation_intervals1(Relation,Ar, Rb, Tq, Ir),
+     ord_merge(Ic,Ir,I).
+
+%-------------- INNER ----------------------
+
+% assuming b true
+compute_brelation_intervals1(Relation,A,([TSb,TEb],V), ARemaining, Tq, I):-
+    % if BRelationTrueI = BRelationUnknownI = [] -> use next Bi
+    % if BRelationTrueI = [], BRelationUnknownI /= [] -> create unknown intervals 
+    % if BRelationTrueI /= [], BRelationUnknownI = [] -> create true intervals 
+    % if BRelationTrueI /= [], BRelationUnknownI /= [] -> create both
+    tur(Relation, A, ([TSb,TEb],V),Tq,BRelationTrueI,BRelationUnknownI,ARemaining),
+    (
+        (BRelationTrueI = [],BRelationUnknownI = [], I=[],!) ;
+        (BRelationTrueI \=[], Relation\=finishes, I = [([TSb,TEb],t)],!);
+        (BRelationTrueI \=[], Relation=finishes, findall(([TSo,TEo],t),member([TSo,TEo],BRelationTrueI),I),!);
+        (BRelationUnknownI \=[], 
+            (
+                Relation\=finishes -> I = [([TSb,TEb],u)] ;
+                (
+                    findall( ([TSo,TE],u),(member([TSo,TEi],BRelationUnknownI),
+                                            min(TEb, TEi,TE)),
+                    I)
+                )
+            )
+        )
+    ).
+
+find_max_end([],Z,Z).
+find_max_end([[_,Te]|R],Z,O):-
+    Te  > Z -> find_max_end(R,Te,O) ; find_max_end(R,Z,O).
+% ------- tur before ---------
+% first list all true intervals before TSb --- [ts,te] is [te,ts]
+% second list all unknown intervals before (relaxed) TSb --- [ts,te] remains
+% third all intervals that can contribute to next TSb --- as original
+tur_before([],_,_,[],[],[]).
+tur_before([([TSa,TEa],t)|R],TSb,Tq,[[TEa,TSa]|TB],UB,RA):- TEa < TSb,
+    tur_before(R,TSb,Tq,TB,UB,RA).
+tur_before([([TSa,TEa],t)|R],TSb,Tq,TB,UB,[([TSa,TEa],t)|RA]):- TEa >= TSb, TEa \= inf,
+    tur_before(R,TSb,Tq,TB,UB,RA).
+tur_before([([TSa,TEa],t)|R],TSb,Tq,TB,UB,RA):- TEa >= TSb, TEa = inf,
+    tur_before([([TSa,Tq],t)|R],TSb,Tq,TB,UB,RA).
+tur_before([([TSa,TEa],u)|R],TSb,Tq,TB,[[TSa,TEa]|UB],RA):-TSb1 is TSb-1, TSa < TSb1,
+    (TEa < TSb -> (RA = RA1) ; (RA = [([TSa,TEa],u)|RA1])),
+    tur_before(R,TSb,Tq,TB,UB,RA1).
+tur_before([([TSa,TEa],u)|R],TSb,Tq,TB,UB,[([TSa,TEa],u)|RA]):- TSb1 is TSb-1,TSa >= TSb1,
+    tur_before(R,TSb,Tq,TB,UB,RA).
+
+% ------- tur meets --------
+% first list all true intervals meets TSb --- [ts,te] is [te,ts]
+% second list all unknown intervals meets (relaxed) TSb --- [ts,te] remains
+% third all intervals that can contribute to next TSb --- as original
+tur(meets,[],_,_,[],[],[]).
+tur(meets,[([TSa,TEa],t)|R],([TSb,TEb],t),Tq,[[TSa,TEa]|TB],UB,[([TSa,TEa],t)|RA]):-  TEa = TSb,!,
+    tur(meets,R,([TSb,TEb],t),Tq,TB,UB,RA).
+tur(meets,[([TSa,TEa],t)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TSa < TSb, TEa >= TSb,!,
+    tur(meets,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(meets,[([_TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa < TSb,!,
+    tur(meets,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(meets,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,[([TSa,TEa],t)|RA]):- TEa \= inf,!,
+    tur(meets,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(meets,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa = inf,!,Tq2 is Tq+2,
+    tur(meets,[([TSa,Tq2],u)|R],([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(meets,[([TSa,TEa],u)|R],([TSb,TEb],t),Tq,TB,UB,RA):- TSa < TSb,!,
+    (TEa < TSb -> (UB = UB1, RA=RA1) ; (UB = [[TSa,TEa]|UB1] , RA = [([TSa,TEa],u)|RA1])),
+    tur(meets,R,([TSb,TEb],t),Tq,TB,UB1,RA1).
+tur(meets,[([TSa,TEa],u)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa < TEb, TSb =< TEa,!,
+    tur(meets,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(meets,[([TSa,TEa],u)|R],([TSb,TEb],V),Tq,TB,UB,RA):-
+    (TEa < TSb -> (RA=RA1) ; (RA = [([TSa,TEa],u)|RA1])),
+    tur(meets,R,([TSb,TEb],V),Tq,TB,UB,RA1).
+
+% ---------------- tur overlaps ------------------
+% first list all true intervals overlaps TSb --- [ts,te] is [te,ts]
+% second list all unknown intervals overlaps (relaxed) TSb --- [ts,te] remains
+% third all intervals that can contribute to next TSb --- as original
+tur(overlaps,[],_,_,[],[],[]).
+tur(overlaps,[([TSa,TEa],t)|R],([TSb,TEb],t),Tq,[[TSa,TEa]|TB],UB,[([TSa,TEa],t)|RA]):- TSa < TSb, TEa > TSb, TEa < TEb,!,
+    tur(overlaps,R,([TSb,TEb],t),Tq,TB,UB,RA).
+tur(overlaps,[([TSa,TEa],t)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa > TSb, TEa < TEb,!,
+    tur(overlaps,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(overlaps,[([_TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa =< TSb,!,
+    tur(overlaps,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(overlaps,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,[([TSa,TEa],t)|RA]):- TEa \= inf,!,
+    tur(overlaps,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(overlaps,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa = inf,!,Tq2 is Tq+2,
+    tur(overlaps,[([TSa,Tq2],u)|R],([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(overlaps,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa = inf,!,Tq2 is Tq+2,
+    tur(overlaps,[([TSa,Tq2],u)|R],([TSb,TEb],Vb),Tq,TB,UB,RA).
+
+tur(overlaps,[([TSa,TEa],u)|R],([TSb,TEb],t),Tq,TB,UB,RA):- TSa < TSb,!,
+    (TEa =< TSb -> (UB = UB1, RA=RA1) ; (UB = [[TSa,TEa]|UB1] , RA = [([TSa,TEa],u)|RA1])),
+    tur(overlaps,R,([TSb,TEb],t),Tq,TB,UB1,RA1).
+tur(overlaps,[([TSa,TEa],u)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa < TEb, TSb < TEa,!,
+    tur(overlaps,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(overlaps,[([TSa,TEa],u)|R],([TSb,TEb],V),Tq,TB,UB,RA):-
+    (TEa =< TSb -> (RA=RA1) ; (RA = [([TSa,TEa],u)|RA1])),
+    tur(overlaps,R,([TSb,TEb],V),Tq,TB,UB,RA1).
+
+%----- tur starts
+% first list all true intervals starts TSb --- [ts,te] is [te,ts]
+% second list all unknown intervals starts (relaxed) TSb --- [ts,te] remains
+% third all intervals that can contribute to next TSb --- as original
+tur(starts,[],_,_,[],[],[]).
+tur(starts,[([TSa,TEa],t)|R],([TSb,TEb],t),Tq,[[TSa,TEa]|TB],UB,[([TSa,TEa],t)|RA]):- TEa\=inf,  TSa = TSb, TEa < TEb,!,
+    tur(starts,R,([TSb,TEb],t),Tq,TB,UB,RA).
+tur(starts,[([TSa,TEa],t)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa\=inf, TSa >= TSb, TEa < TEb,!,
+    tur(starts,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(starts,[([TSa,TEa],t)|R],([TSb,TEb],t),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa=inf,  TSa = TSb, TEa = TEb,!,
+    tur(starts,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(starts,[([TSa,TEa],t)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa=inf, TSa >= TSb, TEa = TEb,!,
+    tur(starts,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(starts,[([_TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa < TSb,!,
+    tur(starts,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(starts,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,[([TSa,TEa],t)|RA]):-
+    tur(starts,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(starts,[([TSa,TEa],u)|R],([TSb,TEb],t),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa < TEa,TSa =< TSb,TEa >= TSb,!,
+    tur(starts,R,([TSb,TEb],t),Tq,TB,UB,RA).
+tur(starts,[([Ta,Ta],u)|R],([TSb,TEb],t),Tq,TB,[[Ta,Ta]|UB],[([Ta,Ta],u)|RA]):- Ta = TSb,!,
+    tur(starts,R,([TSb,TEb],t),Tq,TB,UB,RA).
+tur(starts,[([TSa,TEa],u)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa < TEb, TSb =< TEa,!,
+    tur(starts,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(starts,[([TSa,TEa],u)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):-
+    (TEa < TSb -> (RA=RA1) ; (RA = [([TSa,TEa],u)|RA1])),
+    tur(starts,R,([TSb,TEb],Vb),Tq,TB,UB,RA1).
+
+%------ tur equals 
+% first list all true intervals equals TSb --- [ts,te] is [te,ts]
+% second list all unknown intervals equals (relaxed) TSb --- [ts,te] remains
+% third all intervals that can contribute to next TSb --- as original
+tur(equals,[],_,_,[],[],[]).
+tur(equals,[([TSa,TEa],t)|R],([TSb,TEb],t),Tq,[[TSa,TEa]|TB],UB,[([TSa,TEa],t)|RA]):- TEa\=inf,  TSa = TSb, TEa = TEb,!,
+    tur(equals,R,([TSb,TEb],t),Tq,TB,UB,RA).
+tur(equals,[([TSa,TEa],t)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa\=inf, TSa >= TSb, TEa =< TEb,!,
+    tur(equals,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(equals,[([TSa,TEa],t)|R],([TSb,TEb],t),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa=inf,  TSa = TSb, TEa = TEb,!,
+    tur(equals,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(equals,[([TSa,TEa],t)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa=inf, TSa >= TSb, TEa = TEb,!,
+    tur(equals,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(equals,[([_TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa < TSb,!,
+    tur(equals,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(equals,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,[([TSa,TEa],t)|RA]):-!,
+    tur(equals,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+
+tur(equals,[([TSa,TEa],u)|R],([TSb,TEb],t),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa =< TSb,TEa >= TEb,!,
+    tur(equals,R,([TSb,TEb],t),Tq,TB,UB,RA).
+tur(equals,[([TSa,TEa],u)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa =< TEb, TSb =< TEa,!,
+    tur(equals,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(equals,[([TSa,TEa],u)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):-
+    (TEa < TSb -> (RA=RA1) ; (RA = [([TSa,TEa],u)|RA1])),!,
+    tur(equals,R,([TSb,TEb],Vb),Tq,TB,UB,RA1).
+
+
+%------ tur contains
+% first list all true intervals contains TSb --- [ts,te] is [te,ts]
+% second list all unknown intervals contains (relaxed) TSb --- [ts,te] remains
+% third all intervals that can contribute to next TSb --- as original
+tur(contains,[],_,_,[],[],[]).
+tur(contains,[([TSa,TEa],t)|R],([TSb,TEb],V),Tq,TB,UB,[([TSa,TEa],t)|RA]):- TEa\=inf,  TSa > TSb, TEa < TEb,!,
+    e_and(t,V,Vt),
+    (Vt = t -> (TB = [[TSa,TEa]|TB1], UB=UB1); (UB = [[TSa,TEa]|UB1],TB=TB1)),
+    tur(contains,R,([TSb,TEb],V),Tq,TB1,UB1,RA).
+tur(contains,[([TSa,TEa],t)|R],([TSb,TEb],_V),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa=inf,  TSa > TSb, TEa = TEb,!,
+    tur(contains,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(contains,[([_TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa < TSb,!,
+    tur(contains,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(contains,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,[([TSa,TEa],t)|RA]):-
+    tur(contains,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(contains,[([TSa,TEa],u)|R],([TSb,TEb],Vb),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa < TEb,TSb < TEa,!,
+    tur(contains,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+tur(contains,[([TSa,TEa],u)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):-
+    (TEa < TSb -> (RA=RA1) ; (RA = [([TSa,TEa],u)|RA1])),
+    tur(contains,R,([TSb,TEb],Vb),Tq,TB,UB,RA1).
+
+
+% ---- tur finishes
+% first list all true intervals finishes TSb --- [ts,te] is [te,ts]
+% second list all unknown intervals finishes (relaxed) TSb --- [ts,te] remains
+% third all intervals that can contribute to next TSb --- as original
+tur(finishes,[],_,_,[],[],[]).
+% T T i i
+tur(finishes,[([TSa,TEa],t)|R],([TSb,TEb],t),Tq,[[TSa,TEa]|TB],UB,[([TSa,TEa],t)|RA]):- TEb\=inf, TEa = TEb,  TSb < TSa,!,
+    tur(finishes,R,([TSb,TEb],t),Tq,TB,UB,RA).
+% T u i i
+tur(finishes,[([TSa,TEa],t)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TSa < TEa, TEb\=inf, TEb >= TEa, TSa < TEb, TSa > TSb,!,
+    tur(finishes,R,([TSb,TEb],u),Tq,TB,UB,RA).
+% T V t t
+tur(finishes,[([Ta,Ta],t)|R],([TSb,TEb],V),Tq,TB,UB,[([Ta,Ta],t)|RA]):- Ta\=inf, Ta = TEb,!,
+    e_and(t,V,Vt),
+    (Vt = t -> (TB = [[Ta,Ta]|TB1], UB=UB1); (UB = [[Ta,Ta]|UB1],TB=TB1)),
+    tur(finishes,R,([TSb,TEb],V),Tq,TB1,UB1,RA).
+% inf
+tur(finishes,[([TSa,TEa],t)|R],([TSb,TEb],_V),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],t)|RA]):- TEa=inf,  TSb < TSa, TEa = TEb,!,
+    tur(finishes,R,([TSb,TEb],u),Tq,TB,UB,RA).
+% no - remove A
+tur(finishes,[([_TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):- TEa < TSb,!,
+    tur(finishes,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+% no - keep A
+tur(finishes,[([TSa,TEa],t)|R],([TSb,TEb],Vb),Tq,TB,UB,[([TSa,TEa],t)|RA]):-
+    tur(finishes,R,([TSb,TEb],Vb),Tq,TB,UB,RA).
+% u T i i 
+% % if |a|=1 then no interval of b exists, a point exists however
+tur(finishes,[([TSa,TEa],u)|R],([TSb,TEb],t),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa<TEa, TSa < TEb, TEa >= TEb,!,
+    tur(finishes,R,([TSb,TEb],u),Tq,TB,UB,RA).
+% u T t i  
+tur(finishes,[([Ta,Ta],u)|R],([TSb,TEb],t),Tq,TB,[[Ta,Ta]|UB],[([Ta,Ta],u)|RA]):- Ta = TEb,!,
+    tur(finishes,R,([TSb,TEb],u),Tq,TB,UB,RA).
+% u u i i
+tur(finishes,[([TSa,TEa],u)|R],([TSb,TEb],u),Tq,TB,[[TSa,TEa]|UB],[([TSa,TEa],u)|RA]):- TSa < TEa,  TSb < TEa, TSa < TEb,!,
+    tur(finishes,R,([TSb,TEb],u),Tq,TB,UB,RA).
+% u u t i
+tur(finishes,[([Ta,Ta],u)|R],([TSb,TEb],u),Tq,TB,[[Ta,Ta]|UB],[([Ta,Ta],u)|RA]):-  TSb < Ta, Ta =< TEb,!,
+    tur(finishes,R,([TSb,TEb],u),Tq,TB,UB,RA).
+tur(finishes,[([TSa,TEa],u)|R],([TSb,TEb],Vb),Tq,TB,UB,RA):-
+    (TEa < TSb -> (RA=RA1) ; (RA = [([TSa,TEa],u)|RA1])),
+    tur(finishes,R,([TSb,TEb],Vb),Tq,TB,UB,RA1).
