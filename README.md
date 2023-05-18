@@ -5,7 +5,7 @@ _Phenesthe+_ (orig. φαίνεσθαι) is an extension of Phenesthe. Phenesthe+
 - states (durative)
 - dynamic temporal phenomena (durative)
 
-Given an input stream of input phenomena _Phenesthe+_ will produce the instants or intervals at which user defined temporal phenomena are true or hold. _Phenesthe+_ compared to _Phenesthe_ allows the definitions of event and states with future dependencies. The future dependecies can be expressed with the minimal range operator and filtering.
+Given an input stream of input phenomena _Phenesthe+_ will produce the instants or intervals at which user defined temporal phenomena are true or hold. _Phenesthe+_ compared to _Phenesthe_ allows the definition of event and states with future dependencies. The future dependecies can be expressed with the minimal range operator and filtering.
 
 ## Features
 
