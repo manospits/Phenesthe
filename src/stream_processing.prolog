@@ -45,9 +45,9 @@ stream_perform_query((IFd,LFd,RFd),Retained,Step,Window,QueryTime):-
     statistics(walltime, [_NewTimeSinceStart | [ExecutionTime]]),
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
     count_input(IEi,ISi,IDi),
-    count_results((Ea,Ei),(Sa,Si),(Da,Di)),
+    count_results((Ea,Ei,EIa,EIi),(Sa,Si,SIa,SIi),(Da,Di,DIa,DIi)),
     count_retained(TotalPRetained,TotalIRetained),
-    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
+    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei,EIa,EIi),(Sa,Si,SIa,SIi),(Da,Di,DIa,DIi),TotalPRetained,TotalIRetained),
     print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
     print_results(RFd,QueryTime,Window),
     writeln("\n\n"),
@@ -95,9 +95,9 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     statistics(walltime, [_NewTimeSinceStart | [ExecutionTime]]),
     write("Processing time: "), write(ExecutionTime), write(' ms.'),nl,
     count_input(IEi,ISi,IDi),
-    count_results((Ea,Ei),(Sa,Si),(Da,Di)),
+    count_results((Ea,Ei,EIa,EIi),(Sa,Si,SIa,SIi),(Da,Di,DIa,DIi)),
     count_retained(TotalPRetained,TotalIRetained),
-    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
+    log_stats(LFd,QueryTime,ExecutionTime,IEi,ISi,IDi,(Ea,Ei,EIa,EIi),(Sa,Si,SIa,SIi),(Da,Di,DIa,DIi),TotalPRetained,TotalIRetained),
     print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),TotalPRetained,TotalIRetained),
     print_results(RFd,QueryTime,Window),
     writeln("\n\n"),
@@ -188,6 +188,25 @@ count_input(Ei,Si,Di):-
     findall(L,(input_dynamic_phenomenon_interval(X,I)),D_Info),
     length(D_Info,Di).
 
+count_results((Ea,Ei,EIa,EIi),(Sa,Si,SIa,SIi),(Da,Di,DIa,DIi)):-
+    findall(L,(event_instants(X,TL),length(TL,L)),E_Info),
+    length(E_Info,Ea),
+    sumlist(E_Info,Ei),
+    findall(L,(event_instants_internal(X,TL),length(TL,L)),EI_Info),
+    length(EI_Info,EIa),
+    sumlist(EI_Info,EIi),
+    findall(L,(state_intervals(X,TL),phenomenon_type(X,_,user),length(TL,L)),S_Info),
+    length(S_Info,Sa),
+    sumlist(S_Info,Si),
+    findall(L,(state_intervals_internal(X,TL),phenomenon_type(X,_,user),length(TL,L)),SI_Info),
+    length(SI_Info,SIa),
+    sumlist(SI_Info,SIi),
+    findall(L,(dynamic_phenomenon_intervals(X,TL),phenomenon_type(X,_,user),length(TL,L)),D_Info),
+    length(D_Info,Da),
+    sumlist(D_Info,Di),
+    findall(L,(dynamic_phenomenon_intervals_internal(X,TL),phenomenon_type(X,_,user),length(TL,L)),DI_Info),
+    length(DI_Info,DIa),
+    sumlist(DI_Info,DIi).
 
 count_results((Ea,Ei),(Sa,Si),(Da,Di)):-
     findall(L,(event_instants(X,TL),length(TL,L)),E_Info),
@@ -247,13 +266,14 @@ print_stats(IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di), TotalP, TotalI):-
     write('Retained instants: '), writeln(TotalP),
     write('Retained intervals: '), writeln(TotalI).
 
-log_stats(LFd,Tq,Rt,IEi,ISi,IDi,(Ea,Ei),(Sa,Si),(Da,Di),RP,RI):-
-    write_comma_separated(LFd,[Tq,Rt,IEi,ISi,IDi,Ea,Ei,Sa,Si,Da,Di,RP,RI]),nl(LFd).
+log_stats(LFd,Tq,Rt,IEi,ISi,IDi,(Ea,Ei,EIa,EIi),(Sa,Si,SIa,SIi),(Da,Di,DIa,DIi),RP,RI):-
+    write_comma_separated(LFd,[Tq,Rt,IEi,ISi,IDi,Ea,Ei,EIa,EIi,Sa,Si,SIa,SIi,Da,Di,DIa,DIi,RP,RI]),nl(LFd).
 prepare_log_file(LFd):-
     write_comma_separated(LFd,['query time','processing time','input event instants','input state intervals',
-                               'input dynamic phe. intervals', 'user event instances', 'user event instants',
-                               'user state instances','user state intervals', 'user dynamic phe. instances',
-                               'user dynamic phe. intervals','retained instants','retained intervals']), nl(LFd).
+                               'input dynamic phe. intervals', 'user event instances', 'user event instants','user event instances internal', 'user event instants internal',
+                               'user state instances','user state intervals','user state instances internal','user state intervals internal', 
+                               'user dynamic phe. instances', 'user dynamic phe. intervals','user dynamic phe. instances internal', 'user dynamic phe. intervals internal',
+                               'retained instants','retained intervals']), nl(LFd).
 
 print_results(RFd, QueryTime, Window):-
     write(RFd,"Tq = "),write(RFd,QueryTime),write(RFd,", W = "),write(RFd,Window),nl(RFd),
