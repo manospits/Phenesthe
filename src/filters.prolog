@@ -6,16 +6,33 @@
 % interval formulae e.g. keep intervals greater/smaller than a value
 
 apply_filter(greater(X),IL1,IL2):-
-    findall(([TS,TE],V),
+    findall(([TS,TE],V1),
             (member(([TS,TE],V),IL1),
              (
                  (
-                     %TODO
-                     is_inf_unk(TE)
-                 
+                     
+                     is_inf(TE),
+                     phe_getval(tq,Tq),
+                     (
+                         (
+                             V=t,
+                             D is Tq - TS,
+                             (D > X -> V1=t ; V1 = u)
+                         )
+                         ;
+                         (
+                             V=u,
+                             V1=u
+                         )
+                        
+                     )
                  )
                  ;
-                 (\+is_inf_unk(TE),D is TE - TS, D>X)
+                 (
+                     \+is_inf(TE),
+                     D is TE - TS, D>X,
+                     V1=V
+                 )
              )
             ), IL2).
 
@@ -24,13 +41,24 @@ apply_filter(less(X),IL1,IL2):-
             (member(([TS,TE],V),IL1),
              (
                  (
-                     %TODO
-                     is_inf_unk(TE),
-                     V1=u
+                     
+                     is_inf(TE),
+                     phe_getval(tq,Tq),
+                     (
+                         (
+                             V=t,
+                             D is Tq - TS,
+                             D < X, V1=u
+                         )
+                         ;
+                         (
+                             V=u,V1=u
+                         )
+                     )
                  )
                  ;
                  (
-                     \+is_inf_unk(TE),
+                     \+is_inf(TE),
                      (
                          (
                              V=t,
@@ -46,14 +74,18 @@ apply_filter(less(X),IL1,IL2):-
             ), IL2).
 
 apply_filter(equal(X),IL1,IL2):-
-    findall([TS,TE],
-            (member([TS,TE],IL1),
+    findall(([TS,TE],V1),
+            (member(([TS,TE],V),IL1),
              (
-                 (is_inf_unk(TE),fail)
+                 (
+                     is_inf(TE),
+                     phe_getval(tq,Tq),
+                     D is Tq - TS,
+                     D > X, V1=u
+                 )
                  ;
                  (
-                     %TODO
-                     \+is_inf_unk(TE), D is TE - TS,
+                    \+is_inf(TE), D is TE - TS,
                     (
                          (
                              V=t,

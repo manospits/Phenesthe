@@ -154,49 +154,6 @@ transform_instant_formula(or(L,R), PheVars, ProcessedFormula, (T,V)):-!,
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
 %returns the instants in the window where the negated formula
-%does not hold #
-%transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
-    %transform_instant_formula(R, PheVars, RAt, (Ti,Vi)),
-    %term_variables(RAt,RAtVars),
-    %term_variables( [(Ti,Vi),PheVars],TVPheVars),
-    %variable_list_diff(RAtVars,TVPheVars,RAtVarsUnrelated),
-    %term_variables( [(Ti,Vi),RAtVarsUnrelated],TVRAtVarsU),
-    %variable_list_diff(RAtVars,TVRAtVarsU,RAtVarsRelated),
-    %ProcessedFormula=(
-        %ground(RAtVarsRelated) -> 
-            %(
-                %(\+(RAt),T=(Ti,t));
-                %(Vi=u,RAt,T=(Ti,u))
-            %);
-            %(\+ground(RAtVarsRelated),
-            %setof_empty((Ti,t),RAtVarsUnrelated^(RAt,Vi=t),TRInstantList),
-            %setof_empty((Ti,u),RAtVarsUnrelated^(RAt,Vi=u),URInstantList),
-            %phe_getval(tqmw,Tqmw),
-            %(
-                %(URInstantList\=[],
-                %member((Ti,u), URInstantList),
-                %Ti > Tqmw) -> 
-                    %( Ti=Tc,assertz(formula_retaining_time(FormulaId, RAtVarsRelated, Tc))); true
-            %),
-            %phe_getval(current_window_instants,InstantListW),
-            %( 
-              %retained_formula_instant(FormulaId,RAtVarsRelated,RetainedTTi);
-              %(\+retained_formula_instant(FormulaId,RAtVarsRelated,RetainedTTi),RetainedTTi=[]) 
-            %),
-            %merge_instant_lists([RetainedTTi,TRInstantList],RTRInstantList),
-            %(formula_retaining_time(FormulaId, RAtVarsRelated, Tc) -> 
-                %(
-                    %findall((Ti,t), (member((Ti,t),RTRInstantList),Ti>Tc), InstantsToRetain),
-                    %(InstantsToRetain\=[] -> assertz(retained_right_instants(FormulaId,RAtVarsRelated,InstantsToRetain));true)
-                %);
-                %true
-            %),
-            %ord_subtract(InstantListW,RTRInstantList,TInstantList),
-            %merge_wt_with_unk(TInstantList,URInstantList,InstantList),
-            %member(T,InstantList))
-    %).
-
-%returns the instants in the window where the negated formula
 %does not hold
 %nothing to retain (check)
 transform_instant_formula(tnot(R), PheVars, ProcessedFormula, T):-!,
@@ -671,7 +628,6 @@ relation_intervals_formula(Relation, _FT, LType, RType, LFormula, RFormula, LIL,
         convert_points_to_pis(RILcombined,RFI),
         compute_relation_intervals(Relation,LFI,RFI,Tq,IL),
         %retain intervals that end before tcrit and participate in recognised intervals that overlap tcrit
-        %retain_relation_formula_temp_info(before,LRVarsRelated,FormulaId,Tcrit,AP)
         retain_left_right_relation_intervals(FormulaId, IL, LType, RType, LILcombined, RILcombined, LRVarsRelated, LRVarsRelated, Tq)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
@@ -695,15 +651,12 @@ retain_starting_ending_points(FormulaId, I, SPoints, EPoints, SVarsRelated, EVar
            ;
            (V=t, Te = inf, Tc = Ts)
        ),!,
-    
-       (V\=t -> findall((T,t), (member((T,t), SPoints),T >=Tc), SPointsToRetain) ;
-                findall((T,t), (member((T,t), SPoints),T =Tc), SPointsToRetain)),
-       (V\=t -> findall((T,t), (member((T,t), EPoints), T >= Tc) , EPointsToRetain) ;
-           EPointsToRetain=[] ),
-      (SPointsToRetain \= [] -> 
-        assert_if_not_exists(retained_left_instants(FormulaId, Tq, SVarsRelated, SPointsToRetain)) ; true),
-      (EPointsToRetain \= [] -> 
-        assert_if_not_exists(retained_right_instants(FormulaId, Tq, EVarsRelated, EPointsToRetain)) ; true)
+       (V\=t -> findall((T,t), (member((T,t), SPoints),T >=Tc), SPointsToRetain) ; SPointsToRetain=[(Tc,t)]),
+       (V\=t -> findall((T,t), (member((T,t), EPoints), T >= Tc) , EPointsToRetain) ; EPointsToRetain=[] ),
+       (SPointsToRetain \= [] -> 
+         assert_if_not_exists(retained_left_instants(FormulaId, Tq, SVarsRelated, SPointsToRetain)) ; true),
+       (EPointsToRetain \= [] -> 
+         assert_if_not_exists(retained_right_instants(FormulaId, Tq, EVarsRelated, EPointsToRetain)) ; true)
     );
     (
         true
@@ -742,15 +695,19 @@ retain_left_right_relation_intervals(FormulaId, IL, LType, RType, LILists, RILis
                ;
                (V=t, Te = inf, Tc = Ts)
            ),!, 
-            (
-              (LType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))), LIToRetain));
-              (LType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc), LIToRetain));
-              (LType = instant, findall((T,t), (member((T,t), LILists),T >=Tc), LIToRetain))
-            ),
-            (
-              (RType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))) , RIToRetain));
-              (RType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc) , RIToRetain));
-              (RType = instant, findall((T,t), (member((T,t), RILists), T >= Tc) , RIToRetain))
+            ( 
+              ( 
+                (
+                 (LType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))), LIToRetain));
+                 (LType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc), LIToRetain));
+                 (LType = instant, findall((T,t), (member((T,t), LILists),T >=Tc), LIToRetain))
+                ),
+                (
+                 (RType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))) , RIToRetain));
+                 (RType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc) , RIToRetain));
+                 (RType = instant, findall((T,t), (member((T,t), RILists), T >= Tc) , RIToRetain))
+                )
+              )
             ),
             (
                 LIToRetain \= [] -> 
@@ -765,4 +722,5 @@ retain_left_right_relation_intervals(FormulaId, IL, LType, RType, LILists, RILis
             true
         )
        ).
+
 

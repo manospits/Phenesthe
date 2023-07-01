@@ -87,24 +87,9 @@ mmax_member(RM,[A|R]):-
     mmax_member(RM,R),
     A<RM.
 
-%useful for treating instants and intervals the same way in
-%temporal relations computation
-temporal_information([TS,TE],TS,TE,[]).
-temporal_information(([TS,TE],BTSL),TS,TE,BTSL).
-temporal_information(T,T,T,[]):- \+is_list(T).
+member_rem(A, [A|R], R).
+member_rem(A, [_|R], R1):- member_rem(A,R,R1). 
 
-
-%used in before computation
-get_same_ts_sublist(_,[],[],[]):-!.
-get_same_ts_sublist(B1,[B2|R],[B2|I],RI):-
-    temporal_information(B1,T,_,_),
-    temporal_information(B2,T,_,_),!,
-    get_same_ts_sublist(B1,R,I,RI).
-
-get_same_ts_sublist(B1,[B2|R],[],[B2|R]):-
-    temporal_information(B1,T1,_,_),
-    temporal_information(B2,T2,_,_),
-    T1\=T2.
 
 %merges ordered lists of nd intervals
 ord_merge([], Merge, Merge).
@@ -142,33 +127,12 @@ max(A,B,B):-leq(A,B),!.
 max(A,B,A):-lt(B,A).
 
 
-%create the intervals for current B interval
-create_intervals(_,_,_,[],[],[],_):-!.
-create_intervals(Type,[B|BI],BALL,[(u,A)|AI],I,RemainingA,Tcrit):-
-    !,temporal_information(A,ATS,_,_),
-    temporal_information(B,BTS,_,_),
-    min(ATS,BTS,TS),
-    create_intervals(Type,BI,BALL,[A|AI],II,RemainingA,Tcrit),
-    ord_merge([[TS,unk]],II,I).
-create_intervals(Type,[B|BI],BALL,[A|AI],I,RemainingA,Tcrit):-
-    temporal_information(B,BTS,BTE,_V),
-    temporal_information(A,ATS,_,_),
-    min(ATS,BTS,TS),
-    create_intervals(Type,BI,BALL,[A|AI],II,RemainingAL,Tcrit),
-    (
-      (
-        Type=keep,!,
-        add_if_not_redundant((A,[BTS]),[TS,BTE],Tcrit,RemainingAL,RemainingA)
-      )
-      ;
-      (
-        Type\=keep,
-        add_if_not_redundant(A,[TS,BTE],Tcrit,RemainingAL,RemainingA)
-      )
-    ),
-    ord_merge([[TS,BTE]],II,I).
-create_intervals(Type,[],BALL,[_|AI],I,RemainingA,Tcrit):-
-    create_intervals(Type,BALL,BALL,AI,I,RemainingA,Tcrit).
+get_same_ts_sublist(_,[],[]).
+get_same_ts_sublist(TS,[([TS,TE],V)|R],[([TS,TE],V)|R1]):-
+    get_same_ts_sublist(TS,R,R1).
+get_same_ts_sublist(TS,[([TS1,_],_)|_],[]):-TS1\=TS.
+
+
 
 formula_is(instant,d).
 formula_is(dinterval,d).
@@ -220,81 +184,15 @@ strip_data_from_intervals([],[]).
 strip_data_from_intervals([[(T1,_),(T2,_)]|R],[[T1,T2]|Z]):-strip_data_from_intervals(R,Z).
 
 
-%returns the last ending interval(s) with an instant 
-%not equal to inf or unk, plus all the intervals that end with an
-%inf or unk
-%e.g., for an input [[1,2],[1,3],[1,inf],[2,3]]
-%it will return [[1,3],[1,inf],[2,3]]
-last_ending_temporal_entities([],[]).
-last_ending_temporal_entities([A|R],LastEntities):-
-    temporal_information(A,_TSA,TEA,_),
-    is_inf_unk(TEA),
-    last_ending_temporal_entities(R,LastEntities).
-last_ending_temporal_entities([A|R],LastEntities):-
-    temporal_information(A,_TSA,TEA,_),
-    \+is_inf_unk(TEA),
-    last_ending_temporal_entities(R,LastEntitiesI),
-    (
-        (LastEntitiesI=[],LastEntities=[A])
-        ;
-        (
-            LastEntitiesI=[AI|_],
-            temporal_information(AI,_TSAI,TEAI,_),
-            is_inf_unk(TEAI),
-            LastEntities=[A]
-        )
-        ;
-        (
-            LastEntitiesI=[AI|AItail],
-            temporal_information(AI,_TSAI,TEAI,_),
-            \+is_inf_unk(TEAI),
-            unk_or_inf_temporal_entities(AItail,AItailUI),
-            gt(TEA,TEAI),
-            LastEntities=[A|AItailUI]
-        )
-        ;
-        (
-            LastEntitiesI=[AI|_],
-            temporal_information(AI,_TSAI,TEAI,_),
-            \+is_inf_unk(TEAI),
-            lt(TEA,TEAI),
-            LastEntities=LastEntitiesI
-        )
-        ;
-        (
-            LastEntitiesI=[AI|_],
-            temporal_information(AI,_TSAI,TEAI,_),
-            \+is_inf_unk(TEAI),
-            TEA=TEAI,
-            LastEntities=[A|LastEntitiesI]
-        )
-    ).
 
-unk_or_inf_temporal_entities(L,Linfunk):-
-    include(temporal_entity_has_inf_unk,L,Linfunk).
 
-add_if_not_redundant(AP,[_,TE],Tcrit,RemainingAL,[AP|RemainingAL]):-
-    gt(TE,Tcrit),
-    temporal_information(AP,_,TAPE,_),
-    leq(TAPE,Tcrit),!.
-add_if_not_redundant(_AP,[_,_TE],_Tcrit,RemainingAL,RemainingAL).
-    %\+((gt(TE,Tcrit),get_end(AP,TAPE),leq(TAPE,Tcrit))).
+is_inf(inf).
 
-is_inf_unk(inf).
-is_inf_unk(unk).
-interval_has_unk([_,unk]).
-temporal_entity_has_inf_unk(A):-
-    temporal_information(A,_TSA,TEA,_),
-    is_inf_unk(TEA).
 
-lt(A,unk):-number(A),!.
-lt(unk,inf):-!.
 lt(A,inf):-number(A),!.
 lt(A,B):-number(A),number(B),A<B.
 
-gt(inf,unk):-!.
 gt(inf,B):-number(B),!.
-gt(unk,B):-number(B),!.
 gt(A,B):-number(A),number(B),A>B.
 
 leq(A,B):-A=B,!.
