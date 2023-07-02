@@ -20,8 +20,8 @@ compute_before_intervals(A,B,Tq,I):-
     ord_merge(It,Iuu,I).
 
 %----------- OUTER ----------------
-compute_before_intervals([],_,[],_,[]).
-compute_before_intervals(A,_UBS,[],Tq,I):-
+compute_before_intervals([],_,[],_,[]):-!.
+compute_before_intervals(A,_UBS,[],Tq,I):-A\=[],
     Tq2 is Tq + 2,
     Tq1 is Tq + 1,
     compute_before_intervals(A,[Tq1],[Tq2,inf],_Ar,Tq,I).
@@ -68,15 +68,15 @@ compute_before_intervals(A,UBS,[TSb,TEb], ARemaining, Tq, I):-
                 % at the earliest TSau that satisfies constraints below and above
                 (member([TS,_],BeforeUnknownI),TS < TSx, TEx \= TSb1) ->            
                 (
-                    I = [([TS,TEb],u)],!
+                    I = [([TS,TEb],u,[])],!
                 )
                 ;
                 (                 
                 % if not create Vt (check also if there are unknown from b) intervals,
                 % with the true intervals of A and unknown intervals
                 % with the unknown intervals of A that satisfy the before constraints
-                    findall(([TS,TEb],Vt), (member([_,TS],LBeforeTrueI)),I1),
-                    setof(([TS,TEb],u), (member([TS,_],BeforeUnknownI)),[Iu|_]),
+                    findall(([TS,TEb],Vt,[[TS,TEz],[TSb,TEb]]), (member([TEz,TS],LBeforeTrueI)),I1),
+                    setof(([TS,TEb],u,[]), (member([TS,_],BeforeUnknownI)),[Iu|_]),
                     append(I1,[Iu],Ius),
                     sort(Ius,I),!
                 )
@@ -85,7 +85,7 @@ compute_before_intervals(A,UBS,[TSb,TEb], ARemaining, Tq, I):-
          ;
          (
             % if no unknown interval create true intervals
-            findall(([TS,TEb],Vt), member([TEx,TS],LBeforeTrueI),I1),
+            findall(([TS,TEb],Vt,[[TS,TEx],[TSb,TEb]]), member([TEx,TS],LBeforeTrueI),I1),
             sort(I1,I)
          )
     ))).
@@ -141,63 +141,68 @@ compute_brelation_intervals1(Relation,A,[(B,V)|Rb], Tq, I):-
 
 % assuming b true
 compute_brelation_intervals1(Relation,A,([TSb,TEb],V), ARemaining, Tq, I):-
+    (TEb \= inf -> (TEb1 is TEb - 1, TEb1 \= TSb) ; true) ,
     tur(Relation, A, ([TSb,TEb],V),Tq,BRelationTrueI,BRelationUnknownI,ARemaining),
     create_intervals(Relation,BRelationTrueI,BRelationUnknownI,([TSb,TEb],V),TI,UI),
     ord_merge(TI,UI,IS),
     sort(IS,I).
 
+compute_brelation_intervals1(_Relation,A,([TSb,TEb],_V), A, _Tq, []):-
+    TEb \= inf, TEb1 is TEb - 1, TEb1 = TSb.
+
 create_intervals(_, [], [], _, [],[]).
 %-------------------------------- equals
-create_intervals(equals, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
-    True \= [].
-create_intervals(equals, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u)]):-
-    Unk \= [].
+create_intervals(equals, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t,[[TSb,TEb],[TSb,TEb]])],[]):-
+    True \= [],!.
+create_intervals(equals, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u,[])]):-
+    Unk \= [],!.
 create_intervals(equals, [], Unk, ([TSb,TEb],u), [], UI):-
-    Unk \= [],
+    Unk \= [],!,
     findall(([TSo,TEo],u),(member([TSx,TEx],Unk), max(TSx,TSb,TSo), min(TEx,TEb,TEo)),UIs),sort(UIs,UI).
 
 %-------------------------------- starts finishes
-create_intervals(R, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
+create_intervals(R, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t,[[TSa,TEa],[TSb,TEb]])],[]):-
     member(R,[starts,finishes]),
-    True \= [],!.
-create_intervals(R, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u)]):-
+    True \= [],!,True=[[TSa,TEa]|_].
+create_intervals(R, [], Unk, ([TSb,TEb],t), [], [([TSb,TEb],u,[])]):-
     member(R,[starts,finishes]),
     Unk \= [],!.
 create_intervals(starts, [], Unk, ([TSb,TEb],u), [], UI):-
-    Unk \= [],
-    findall(([TSo,TEo],u),(member([TSx,_TEx],Unk),
+    Unk \= [],!,
+    findall(([TSo,TEo],u,[]),(member([TSx,_TEx],Unk),
                            max(TSx,TSb,TSo),
                            TEo=TEb),UIs),sort(UIs,UI).
 create_intervals(finishes, [], Unk, ([TSb,TEb],u), [], UI):-
-    Unk \= [],
-    findall(([TSo,TEo],u),(member([_TSx,TEx],Unk),
+    Unk \= [],!,
+    findall(([TSo,TEo],u,[]),(member([_TSx,TEx],Unk),
                            min(TEx,TEb,TEo),
                            TSo=TSb),UIs),sort(UIs,UI).
 
 %------------------------------- meets/overlaps 
-create_intervals(R, True, _Unk, ([_TSb,TEb],t), TI,[]):-
+create_intervals(R, True, Unk, ([TSb,TEb],t), TI, UI):-
     member(R,[meets,overlaps]),
-    True\=[],!,
-    findall(([TSx,TEb],t),member([TSx,_],True),TI).
-create_intervals(R, [], [[TSa,_TEa]|_], ([_TSb,TEb],t), [], [([TSa,TEb],u)]):-
-    member(R,[meets,overlaps]),!.
+    (True\=[] ; Unk \= []),!,
+    findall(([TSx,TEb],t,[[TSx,TEx],[TSb,TEb]]),member([TSx,TEx],True),TI),
+    (Unk \= [] -> (Unk = [[TSa,_TEa]|_], UI = [([TSa,TEb],u,[])]); UI=[]).
+
 create_intervals(R, [], Unk, ([_TSb,TEb],u), [], UI):-
     member(R,[meets,overlaps]),
-    Unk \= [],
-    findall(([TSo,TEo],u),(member([TSx,TEx],Unk),
+    Unk \= [],!,
+    findall(([TSo,TEo],u,[]),(member([TSx,TEx],Unk),
                            (TEx\=inf -> TEx1 is TEx+1; TEx1 = TEx),
                            min(TEx1,TEb,TEo),
                            TSo=TSx),UIs),sort(UIs,UI).
 
 %------------------------------- contains 
-create_intervals(contains, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t)],[]):-
-    True\=[],!.
-create_intervals(contains, [], [[_TSa,_TEa]|_], ([TSb,TEb],t), [], [([TSb,TEb],u)]):-!.
-create_intervals(contains, [], Unk, ([_TSb,TEb],u), [], UI):-
-    Unk \= [],
-    findall( ([TSo,TEo],u),(member([TSo,TEx],Unk),
-                           (TEx\=inf -> TEx1 is TEx+1; TEx1 = TEx),
-                            min(TEb, TEx,TEo)),UI).
+create_intervals(contains, True, _Unk, ([TSb,TEb],t), [([TSb,TEb],t,[[TSb,TEb],[TSa,TEa]])],[]):-
+    True\=[],!,True=[[TSa,TEa]|_].
+create_intervals(contains, [], [[_TSa,_TEa]|_], ([TSb,TEb],t), [], [([TSb,TEb],u,[])]):-!.
+create_intervals(contains, [], Unk, ([TSb,TEb],u), [], [([TSb,TEb],u,[])]):-
+    Unk \= [].
+    %findall(([TSb,TE],u,[]),(member([_TSo,TEx],Unk),
+                            %%(TSb =< TSo -> TS = TSb ; TS is TSo + 1),
+                            %(TEx\=inf -> TEx1 is TEx+1; TEx1 = TEx),
+                             %(TEb >= TEx -> TE = TEb ; TE = TEx)),UI).
 
 
 find_max_end([],Z,Z).

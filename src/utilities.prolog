@@ -110,15 +110,26 @@ ord_merge3(>, H1, T1, H2, T2, _, [H2|Merge]) :-
 
 
 interval_compare(<,([TSa,_TEa],_V1),([TSb,_TEb],_V2),_V3):-
-    TSa < TSb.
+    TSa < TSb,!.
 interval_compare(<,([TS,TEa],_V1),([TS,TEb],_V2),_V3):-
-    TEa < TEb.
+    TEa < TEb,!.
 interval_compare(>,([TSa,_TEa],_V1),([TSb,_TEb],_V2),_V3):-
-    TSa > TSb.
+    TSa > TSb,!.
 interval_compare(>,([TS,TEa],_V1),([TS,TEb],_V2),_V3):-
-    TEa > TEb.
+    TEa > TEb,!.
 interval_compare(=,([TS,TE],V1),([TS,TE],V2),([TS,TE],V3)):-
-    member(t,[V1,V2]) -> V3 = t ; V3=u.
+    (member(t,[V1,V2]) -> V3 = t ; V3=u),!.
+
+interval_compare(<,([TSa,_TEa],_V1,_),([TSb,_TEb],_V2,_),_V3):-
+    TSa < TSb,!.
+interval_compare(<,([TS,TEa],_V1,_),([TS,TEb],_V2,_),_V3):-
+    TEa < TEb,!.
+interval_compare(>,([TSa,_TEa],_V1,_),([TSb,_TEb],_V2,_),_V3):-
+    TSa > TSb,!.
+interval_compare(>,([TS,TEa],_V1,_),([TS,TEb],_V2,_),_V3):-
+    TEa > TEb,!.
+interval_compare(=,([TS,TE],V1,Z1),([TS,TE],V2,Z2),([TS,TE],V3,Z)):-
+    (member(t,[V1,V2]) -> (V3 = t, Z=Z1 ); (V3=u, Z=Z2)),!.
 
 min(A,B,A):-leq(A,B),!.
 min(A,B,B):-lt(B,A).
@@ -295,10 +306,24 @@ e_and(t,u,u).
 start_same([TS,_],[([TS,_],_)|_]).
 
 split_true_unknown([],[],[]).
-split_true_unknown([(V,t)|R],[(V,t)|Rt],Ru):-
+split_true_unknown([(V,t)|R],[(V,t)|Rt],Ru):-!,
     split_true_unknown(R,Rt,Ru).
-split_true_unknown([(V,u)|R],Rt,[[(V,u)]|Ru]):-
+split_true_unknown([(V,u)|R],Rt,[[(V,u)]|Ru]):-!,
     split_true_unknown(R,Rt,Ru).
+split_true_unknown([(V,t,Z)|R],[(V,t,Z)|Rt],Ru):-!,
+    split_true_unknown(R,Rt,Ru).
+split_true_unknown([(V,u,_Z)|R],Rt,[[(V,u)]|Ru]):-!,
+    split_true_unknown(R,Rt,Ru).
+
+remove_source([],[]).
+remove_source([(I,V,_S)|R],[(I,V)|R1]):-
+    remove_source(R,R1).
+remove_source([(I,V)|R],[(I,V)|R1]):-
+    remove_source(R,R1).
+
+split_paired_list([],[],[]).
+split_paired_list([(A,B)|R],[A|RA],[B|RB]):-
+    split_paired_list(R,RA,RB).
 
 int_member([TSa,TEa], [[TSa,TEa]|_R], Tc):- TSa < Tc.
 int_member(_, [[TSa,_TEa]|_R], Tc):- TSa >= Tc,!,fail.
@@ -310,8 +335,6 @@ sublist_intervals_starting([[A,B]|RA],A,[[A,B]|R]):-
     sublist_intervals_starting(RA,A,R).
 
 tunion(A, I):- merge_disjoint_interval_lists(A,I).
-
-
 
 convert_points_to_pis([],[]).
 convert_points_to_pis([([A,B],V)|R],[([A,B],V)|R]):-!.

@@ -626,9 +626,10 @@ relation_intervals_formula(Relation, _FT, LType, RType, LFormula, RFormula, LIL,
         merge_temporal_information_lists(RType,[RetainedRIL,MergedRIList],RILcombined),
         convert_points_to_pis(LILcombined,LFI),
         convert_points_to_pis(RILcombined,RFI),
-        compute_relation_intervals(Relation,LFI,RFI,Tq,IL),
+        compute_relation_intervals(Relation,LFI,RFI,Tq,ILInfo),
+        remove_source(ILInfo,IL),
         %retain intervals that end before tcrit and participate in recognised intervals that overlap tcrit
-        retain_left_right_relation_intervals(FormulaId, IL, LType, RType, LILcombined, RILcombined, LRVarsRelated, LRVarsRelated, Tq)
+        retain_left_right_relation_intervals(Relation,FormulaId, ILInfo, LType, RType, LILcombined, RILcombined, LRVarsRelated, LRVarsRelated, Tq)
     ),
     FormulaIdp1 is FormulaId+1,phe_setval(formula_id,FormulaIdp1).
 
@@ -685,42 +686,61 @@ retain_left_right_intervals(FormulaId, IL, LILists, RILists, LVarsRelated, RVars
         )
        ).
 
-retain_left_right_relation_intervals(FormulaId, IL, LType, RType, LILists, RILists, LVarsRelated, RVarsRelated, Tq):-
+retain_left_right_relation_intervals(Relation,FormulaId, IL, LType, RType, LILists, RILists, LVarsRelated, RVarsRelated, Tq):-
     phe_getval(tqmw,Tqmw),
-       (
+    findall((LIToRetain,RIToRetain),
         (
-           member(([Ts,Te],V),IL),
+           member_rem(IV,IL,REM),
+           (IV = ([Ts,Te],V,Z) ; IV=([Ts,Te],V)),
            (
                (V=u, Ts > Tqmw, Tc = Ts)
                ;
                (V=t, Te = inf, Tc = Ts)
-           ),!, 
-            ( 
-              ( 
+           ), 
+           (
                 (
-                 (LType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))), LIToRetain));
-                 (LType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc), LIToRetain));
-                 (LType = instant, findall((T,t), (member((T,t), LILists),T >=Tc), LIToRetain))
-                ),
+                  V=u,!, % u ->  keep everything, stop checking rest members
+                  ( 
+                    (
+                     %(LType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))), LIToRetain));
+                     (LType = dinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc, Tei\=inf), LIToRetain));
+                     %(LType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc), LIToRetain));
+                     (LType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), LILists),Tsi >=Tc, Tei\=inf), LIToRetain));
+                     (LType = instant, findall((T,t), (member((T,t), LILists),T >=Tc), LIToRetain))
+                    ),
+                    (
+                     %(RType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))) , RIToRetain));
+                     (RType = dinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc, Tei\=inf) , RIToRetain));
+                     %(RType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc) , RIToRetain));
+                     (RType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc, Tei\=inf) , RIToRetain));
+                     (RType = instant, findall((T,t), (member((T,t), RILists), T >= Tc) , RIToRetain))
+                    )
+                  )
+                );
                 (
-                 (RType = dinterval, findall(([Tsi,Te1],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc, ((Tei\=inf,Te1=Tei);(Tei=inf,Te1=Tq))) , RIToRetain));
-                 (RType = ndinterval, findall(([Tsi,Tei],t), (member(([Tsi,Tei],t), RILists), Tsi >= Tc) , RIToRetain));
-                 (RType = instant, findall((T,t), (member((T,t), RILists), T >= Tc) , RIToRetain))
+                   V=t,
+                   get_same_ts_sublist(Ts,REM,SREM), % t and no u so far or for rest i with ts -> assert only whats needed
+                   \+((member(IVi,SREM),(IVi = ([_,_],u,_) ; ([_,_],u)))),
+                   retain_left_right_relation_intervals_true(Relation, Z, LType, RType, LIToRetain, RIToRetain)
                 )
-              )
-            ),
-            (
-                LIToRetain \= [] -> 
-                    assert_if_not_exists(retained_left_intervals(FormulaId, Tq, LVarsRelated, LIToRetain)) ; true
-            ),
-            (
-                RIToRetain \= [] -> 
-                    assert_if_not_exists(retained_right_intervals(FormulaId, Tq, RVarsRelated, RIToRetain)) ; true
             )
-        );
-        (
-            true
-        )
-       ).
+        ), LRIToRetainL),
+        split_paired_list(LRIToRetainL,LIToRetainL,RIToRetainL),
+        merge_non_disjoint_interval_lists(LIToRetainL,LIToRetainF),
+        merge_non_disjoint_interval_lists(RIToRetainL,RIToRetainF),
+        (LIToRetainF \= [] -> 
+                    assert_if_not_exists(retained_left_intervals(FormulaId, Tq, LVarsRelated, LIToRetainF)) ; true),
+        (RIToRetainF \= [] -> 
+                    assert_if_not_exists(retained_right_intervals(FormulaId, Tq, RVarsRelated, RIToRetainF)) ; true).
 
+retain_left_right_relation_intervals_true(Relation, [[T,T],_B], instant, _RType, [(T,t)], []):-
+    member(Relation,[before,meets,overlaps]),!.
+retain_left_right_relation_intervals_true(Relation, [A,_B], _LType, _RType, [(A,t)], []):-
+    member(Relation,[before,meets,overlaps]),!.
+retain_left_right_relation_intervals_true(starts, [[T,T],_B], instant, _RType, [(T,t)], []):-!.
+retain_left_right_relation_intervals_true(starts, [A,_B], _LType, _RType, [(A,t)], []):-!.
+retain_left_right_relation_intervals_true(finishes, [_A,_B], _, _, [], []).
+retain_left_right_relation_intervals_true(contains, [_A,[T,T]],  _LType, instant, [], [(T,t)]):-!.
+retain_left_right_relation_intervals_true(contains, [_A,B],  _LType, _RType, [],  [(B,t)]):-!.
+retain_left_right_relation_intervals_true(equals, [_A,_B], _,_, [], []).
 
