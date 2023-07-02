@@ -23,7 +23,7 @@ state_phenomenon suspicious_stop(V, F) :=
     
 state_phenomenon waiting_time(V,P) := start(in_port(V,P)) ~>> start(moored(V,P)). 
     
-
+state_phenomenon long_waiting_time(V,P) := filter((waiting_time(V,P)), greater(3600)).
 
 dynamic_phenomenon trip(V,PA,PB):=
     end(moored(V,PA)) before

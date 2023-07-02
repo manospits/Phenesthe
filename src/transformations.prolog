@@ -691,7 +691,7 @@ retain_left_right_relation_intervals(Relation,FormulaId, IL, LType, RType, LILis
     findall((LIToRetain,RIToRetain),
         (
            member_rem(IV,IL,REM),
-           (IV = ([Ts,Te],V,Z) ; IV=([Ts,Te],V)),
+           ((IV = ([Ts,Te],V,Z),atom(V)) ; IV=([Ts,Te],V)),
            (
                (V=u, Ts > Tqmw, Tc = Ts)
                ;

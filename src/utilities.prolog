@@ -316,9 +316,9 @@ split_true_unknown([(V,u,_Z)|R],Rt,[[(V,u)]|Ru]):-!,
     split_true_unknown(R,Rt,Ru).
 
 remove_source([],[]).
-remove_source([(I,V,_S)|R],[(I,V)|R1]):-
+remove_source([(I,V,_S)|R],[(I,V)|R1]):-!,
     remove_source(R,R1).
-remove_source([(I,V)|R],[(I,V)|R1]):-
+remove_source([(I,V)|R],[(I,V)|R1]):-atom(V),!,
     remove_source(R,R1).
 
 split_paired_list([],[],[]).
