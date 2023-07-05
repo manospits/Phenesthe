@@ -18,16 +18,24 @@ state_phenomenon underway(V) :=  (ais(V,S1,_,_) aand S1 >= 2.7)  ~> (ais(V,S2,_,
 state_phenomenon moored(V,P) := stopped(V) intersection in_port(V,P).
 
 
-state_phenomenon suspicious_stop(V, F) := 
+state_phenomenon fishing_warning(V, F) := 
     filter(((in_fishing_area(V,F) aand \+vessel_type(V,fishing)) intersection stopped(V)), greater(600)).
     
 state_phenomenon waiting_time(V,P) := start(in_port(V,P)) ~>> start(moored(V,P)). 
     
 state_phenomenon long_waiting_time(V,P) := filter((waiting_time(V,P)), greater(3600)).
 
+state_phenomenon unusual_stop(V) := stopped(V) complement (in_port(V,_P) union in_fishing_area(V,_F)).
+
+state_phenomenon possible_malfunction(V) := filter((unusual_stop(V)), greater(7200)).
+
+
 dynamic_phenomenon trip(V,PA,PB):=
     end(moored(V,PA)) before
      (underway(V) before start(moored(V,PB))).
+
+dynamic_phenomenon suspicious_trip(V,PA,PB):=
+    trip(V,PA,PB) contains (fishing_warning(V,_F) union unusual_stop(V)).
 
 dynamic_phenomenon fishing_trip(V,PA,FA,PB):=
     (end(moored(V,PA)) aand vessel_type(V,fishing)) before

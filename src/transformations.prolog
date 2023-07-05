@@ -308,8 +308,13 @@ transform_instant_formula(end(DFormula), PheVars, ProcessedFormula, T):-!,
                 (
                     TE\=inf, T=(TE,t)
                 )  ;
-                (TS1 is TS+1, create_window_instants(TS1,TE,u,LTU),
-                member(T,LTU))
+                (  
+                    TS1 is TS+1,
+                    phe_getval(tq,Tq),
+                    (TE > Tq -> TE1=Tq; TE1=TE),
+                    create_window_instants(TS1,TE1,u,LTU),
+                    member(T,LTU)
+                )
             )
         )
     ).

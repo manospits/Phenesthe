@@ -16,7 +16,7 @@ state_phenomenon in_fishing_area(V,F) := entersFishingArea(V,F) ~> leavesFishing
 state_phenomenon stopped(V) := stop_start(V) ~> stop_end(V).
 state_phenomenon underway(V) :=  (ais(V,S1,_,_) aand S1 >= 2.7)  ~> (ais(V,S2,_,_) aand S2<2.7).
 state_phenomenon moored(V,P) := stopped(V) intersection in_port(V,P).
-
+state_phenomenon unusual_stop(V) := stopped(V) complement (in_port(V,_P) union in_fishing_area(V,_F)).
 
 dynamic_phenomenon trip(V,PA,PB):=
     end(moored(V,PA)) before
