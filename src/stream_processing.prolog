@@ -73,7 +73,7 @@ queries_on_fstream(InputFile,LogFile,ResultsFile,Start,End,Step,Window):-
     open(ResultsFile,write,RFd,[alias(results)]),
     prepare_log_file(LFd),
     FirstQueryTime is Start+Step,
-    fstream_perform_query((IFd,LFd,RFd),[],End,Step,Window,FirstQueryTime),
+    fstream_perform_query((IFd,LFd,RFd),[],End,Step,Window,FirstQueryTime),!,
     close(IFd),close(LFd),close(RFd).
 
 fstream_perform_query(_Fd,_Retained,End,_Step,_Window,QueryTime):-
@@ -105,7 +105,7 @@ fstream_perform_query((IFd,LFd,RFd),Retained,End,Step,Window,QueryTime):-
     garbage_collect, trim_stacks,
     !,
     (
-        (StreamFinished = 0,
+        (StreamFinished = 0,!,
          fstream_perform_query((IFd,LFd,RFd),RetainedNew,End,Step,Window,NewQueryTime)
         );
         (StreamFinished = 1 )
