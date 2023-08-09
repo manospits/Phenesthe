@@ -7,7 +7,7 @@ permalink: /installation/
 
 ## Installation
 
-Running _Phenesthe_ requires a prolog installation. Specifically it has been tested under <a href=\"www.swi-prolog.org\">SWI-Prolog</a>  7.6.4.
+Running _Phenesthe_ requires a prolog installation. Specifically it has been tested under [SWI-Prolog](swi-prolog.org) 7.6.4.
 You can download the latest version of _Phenesthe_ using the command below:
 ```
 git clone https://github.com/manospits/Phenesthe.git
