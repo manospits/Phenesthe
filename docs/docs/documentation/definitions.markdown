@@ -28,10 +28,7 @@ event_phenomenon gain(Person) :=
 #### States
 States are defined using disjoint interval formulae of the language and the `state_phenomenon` keyword. An example from the maritime domain is the following:
 ```
-dynamic_phenomenon fishing_trip(V,PA,FA,PB):=
-    (end(moored(V,PA)) aand vessel_type(V,fishing)) before
-        ((underway(V) contains in_fishing_area(V,FA))
-            before start(moored(V,PB))).
+state_phenomenon moored(V,P) := stopped(V) intersection in_port(V,P).
 ```
 #### Dynamic temporal phenomena
 Dynamic temporal phenomena are defined using non-disjoint interval formulae of the language and the `dynamic_phenomenon` keyword. An example from the meal preparation scenario is the following:
