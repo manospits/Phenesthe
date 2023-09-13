@@ -137,7 +137,7 @@ Non-disjoint interval formulae describe the temporal arrangement of temporal phe
 |---|---|---|
 | Before | `fa before fb`  | `fa` occurs (holds), before `fb` occurs (holds) and they are contiguous. |
 | Overlaps | `fa overlaps fb`  |  `fa` starts holding, then `fb` starts holding, next `fa` stops holding, finally `fb` stops holding. |
-| Meets | `fa meets fb` | Holds when `fb` starts holding when `fa` stops holding.|
+| Meets | `fa meets fb` | Holds when `fb` starts holding at the same time as  `fa` stops holding.|
 | Finishes |   `fa finishes fb` | Holds when `fb` holds, and `fa` occurs when `fb` stops holding or `fa` starts holding after `fb` starts and finishes at the same time as `fb`. |
 | Starts |   `fa starts fb` | Holds when `fb` holds, and `fa` occurs when `fb` starts holding or `fb` starts holding when `fa` starts but stops holding earlier than `fb`.|       
 | Contains | `fa contains fb` | Holds when `fa` holds and `fb` occurs (holds) during `fa`.| 
