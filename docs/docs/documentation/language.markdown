@@ -95,7 +95,7 @@ Disjoint interval formulae describe durative states that hold in disjoint interv
 | Temporal intersection | `fa intersection fb` | Holds when both `fa` and `fb` hold.|
 | Temporal complement |   `fa complement fb` | Holds when `fa` holds but `fb` does not hold. |
 | Constrained temp. iteration |   `fa [<,=,>=]@ N` | Holds when `fa` occurs at times with contiguous temporal distance (t<sub>i</sub>-t<sub>i-1</sub>) [<,=,>=] N. |       
-| Constrained iteration |   `fa [<,=,>=]@ collector(N, Vars, predicateName)` | Holds when `fa` occurs at times with contiguous temporal distance (t<sub>i</sub>-t<sub>i-1</sub>) [<,=,>=] N and Pname(Vars<sub>i</sub>,Vars<sub>i-1</sub>) is true. |       
+| Constrained iteration |   `fa [<,=,>=]@ collector(N, Vars, predicateName)` | Holds when `fa` occurs at times with contiguous temporal distance (t<sub>i</sub>-t<sub>i-1</sub>) [<,=,>=] N and predicateName(Vars<sub>i</sub>,Vars<sub>i-1</sub>) is true. |       
 | Filtering | `filter(fb,f(...))` | Filter intervals at which `fb` holds by applying function f on their individual size. |
 
 ##### Disjoint interval formulae examples
