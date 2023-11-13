@@ -24,20 +24,26 @@ compute_before_intervals([],_,[],_,[]):-!.
 compute_before_intervals(A,_UBS,[],Tq,I):-A\=[],
     Tq2 is Tq + 2,
     Tq1 is Tq + 1,
-    compute_before_intervals(A,[Tq1],[Tq2,inf],_Ar,Tq,I).
+    compute_before_intervals(A,[Tq1],[Tq2,inf], t, _Ar, Tq, I).
 
 compute_before_intervals(A,UBS,[(B,t)|Rb], Tq, I):-
-    compute_before_intervals(A, UBS, B, Ar, Tq, Ic),
+    compute_before_intervals(A, UBS, B, t, Ar, Tq, Ic),
     (start_same(B,Rb) -> compute_before_intervals(A, UBS, Rb, Tq, Ir) ; compute_before_intervals(Ar, UBS, Rb, Tq, Ir)),
     append(Ic,Ir,Is),
     sort(Is,I).
-compute_before_intervals(A,UBS,[([TS,_],u)|Rb], Tq, I):-
-    compute_before_intervals(A, [TS|UBS], Rb, Tq , I).
+compute_before_intervals(A,UBS,[(B,u)|Rb], Tq, I):-
+    B = [TS,TE],
+    member(([TSa,_],t),A), TSa > TE,!,
+    compute_before_intervals(A, UBS, B, u, Ar, Tq, Ic),
+    (start_same(B,Rb) -> compute_before_intervals(A, UBS, Rb, Tq, Ir) ; compute_before_intervals(Ar, [TS|UBS], Rb, Tq, Ir)),
+    append(Ic,Ir,Is),
+    sort(Is,I).
+
+compute_before_intervals(A, UBS, [([TS,_],u)|Rb], Tq, I):-!,
+    compute_before_intervals(A, [TS|UBS], Rb, Tq, I).
 
 %-------------- INNER ----------------------
-
-% assuming b true
-compute_before_intervals(A,UBS,[TSb,TEb], ARemaining, Tq, I):-
+compute_before_intervals(A,UBS,[TSb,TEb], Vb, ARemaining, Tq, I):-
     tur_before(A,TSb,Tq,RSBeforeTrueI,SBeforeUnknownI,ARemaining),
     % if RSBeforeTrueI = RSBeforeUnknownI = [] -> use next Bi
     % if RSBeforeTrueI = [], RSBeforeUnknownI /= [] -> create unknown intervals 
@@ -57,6 +63,7 @@ compute_before_intervals(A,UBS,[TSb,TEb], ARemaining, Tq, I):-
     ),
     TSb1 is TSb-1,
     ((member(Tu, UBS),Tu > TEx, Tu < TSb) -> Vt = u ; Vt = t),
+    e_and(Vt,Vb,Vc),
     sublist_intervals_starting(BeforeTrueI,TEx,LBeforeTrueI),
     %if exists an interval that starts earlier and finishes later (possibly) than TEx
     %then unknown interval should be created
@@ -67,25 +74,29 @@ compute_before_intervals(A,UBS,[TSb,TEb], ARemaining, Tq, I):-
                 %if below true create an interval that has unknown status and starts
                 % at the earliest TSau that satisfies constraints below and above
                 (member([TS,_],BeforeUnknownI),TS < TSx, TEx \= TSb1) ->            
-                (
-                    I = [([TS,TEb],u,[])],!
-                )
-                ;
-                (                 
-                % if not create Vt (check also if there are unknown from b) intervals,
-                % with the true intervals of A and unknown intervals
-                % with the unknown intervals of A that satisfy the before constraints
-                    findall(([TS,TEb],Vt,[[TS,TEz],[TSb,TEb]]), (member([TEz,TS],LBeforeTrueI)),I1),
-                    setof(([TS,TEb],u,[]), (member([TS,_],BeforeUnknownI)),[Iu|_]),
-                    append(I1,[Iu],Ius),
-                    sort(Ius,I),!
+                
+                    (
+                        I = [([TS,TEb],u,[])],!
+                    )
+                    ;
+                    (                 
+                     
+                        ((member([_,TE],BeforeUnknownI),TE > TEx) -> Vk = u ; Vk = t),
+                        e_and(Vc,Vk,Vr),
+                        %if not create Vc (check also if there are unknown from b) intervals,
+                        %with the true intervals of A and unknown intervals
+                        %with the unknown intervals of A that satisfy the before constraints
+                        findall(([TS,TEb],Vr,[[TS,TEz],[TSb,TEb]]), (member([TEz,TS],LBeforeTrueI)),I1),
+                        setof(([TS,TEb],u,[]), (member([TS,_],BeforeUnknownI)),[Iu|_]),
+                        append(I1,[Iu],Ius),
+                        sort(Ius,I),!
                 )
             )
          )
          ;
          (
-            % if no unknown interval create true intervals
-            findall(([TS,TEb],Vt,[[TS,TEx],[TSb,TEb]]), member([TEx,TS],LBeforeTrueI),I1),
+            % if no unknown interval create Vc intervals
+            findall(([TS,TEb],Vc,[[TS,TEx],[TSb,TEb]]), member([TEx,TS],LBeforeTrueI),I1),
             sort(I1,I)
          )
     ))).
