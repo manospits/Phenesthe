@@ -16,13 +16,15 @@
 
 :-use_module(library(lists)).
 :-use_module(library(ordsets)).
-:-set_prolog_flag(optimise, true).
 
 :-dynamic dependencies/2,
           atemporal/1,
           input_phenomenon/2,
           user_phenomenon/2,
+          learned_phenomenon/2,
+          candidate_phenomenon/2,
           phenomenon_conditions/2,
+          phenomenon_knowledge_fountain/2,
           phenomenon_transformed_conditions/3,
           input_event_instant/2,
           event_instants/2,
@@ -32,40 +34,48 @@
           dynamic_phenomenon_intervals/2,
           dynamic_phenomenon_intervals_internal/2,
           retained_starting_formula/4,
-          retained_iteration_formula_points/4,
-          retained_iteration_formula_intervals/4,
           retained_tset_formula_intervals/5,
           retained_relation_formula_temp_info/5,
           level/2.
 
 :-multifile input_phenomenon/2.
-:-discontiguous atemporal_preprocess/3, phenomenon_conditions/2.
+:- discontiguous phenomenon_conditions/2.
 
 :-['./src/operators.prolog'].
 :-['./src/utilities.prolog'].
-:-['./src/filters.prolog'].
 :-['./src/transformations.prolog'].
 :-['./src/temporal_connectives.prolog'].
 :-['./src/temporal_operators.prolog'].
 :-['./src/temporal_relations.prolog'].
-:-['./src/stream_processing.prolog'].
+:-['./src/filters.prolog'].
 :-['./src/multithreading.prolog'].
+:-['./src/fstream_processing.prolog'].
+:-['./src/learning_gp.prolog'].
+:-['./src/learning_exp.prolog'].
 
 % Multithreading is by default on.
 :-phe_setval(multithreading,1).
-:-phe_setval(preprocessing,0).
+:-phe_setval(verboselearning,1).
 
 %Definitions loading/pre-processing/storing
 term_expansion(input_phenomenon(Phenomenon,Type),input_phenomenon(Phenomenon,Type)).
 term_expansion(:=(event_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,event)).
 term_expansion(:=(state_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,state)).
 term_expansion(:=(dynamic_phenomenon(X),Y), phenomenon_conditions(X,Y)):-assertz(user_phenomenon(X,dynamic_phenomenon)).
+term_expansion(=:(dynamic_phenomenon(X),Y), phenomenon_knowledge_fountain(X,Y)):-assertz(learned_phenomenon(X,dynamic_phenomenon)).
 
 % Predicate type handling
 % event state dynamic phenomenon predicates
 % input or user defined
 phenomenon_type(X,PType,DType):-
-    user_phenomenon(X,PType), DType = user ; input_phenomenon(X,PType), DType = input.
+    user_phenomenon(X,PType), DType = user ;
+    input_phenomenon(X,PType), DType = input ;
+    learned_phenomenon(X,PType), DType = learned ;
+    candidate_phenomenon(X,PType), DType = candidate.
+
+phenomenon_type_candidate_user(X, PType):-
+    user_phenomenon(X,PType);
+    candidate_phenomenon(X,PType).
 
 % Initialisations
 % Load the definitions in memory
@@ -102,13 +112,12 @@ find_dependencies(Condition,D):-
 % start end ops or tnot
 find_dependencies(Condition,D):-
     Condition=..[OP,StateExpr],
-    member(OP,[start,end,tnot,gtnot]),!,
+    member(OP,[start,end,tnot]),!,
     find_dependencies(StateExpr,D).
 
-% filter op
-find_dependencies(Condition, D):-
-    Condition=..[filter,Expr,_],!,
-    find_dependencies(Expr,D).
+% deal with filter operator
+find_dependencies(filter(Condition,_),D):-
+    !,find_dependencies(Condition,D).
 
 % reached a phenomenon
 find_dependencies(Condition,[Condition]):-
@@ -191,10 +200,8 @@ discard_redundant(Tqmw,Tqmws):-
         retract(input_dynamic_phenomenon_interval(X,[Ts,Te]))),
     %retract old retained information
     retractall(retained_starting_formula(_,_,_,Tqmws)),
-    retractall(retained_iteration_formula_points(_,_,_,Tqmws)),
-    retractall(retained_iteration_formula_intervals(_,_,_,Tqmws)),
     retractall(retained_tset_formula_intervals(_,_,_,Tqmws,_)),
-    retractall(retained_relation_formula_temp_info(_,_,_,Tqmws,_)).
+    retractall(retained_relation_formula_intervals(_,_,_,Tqmws,_)).
 
 
 process_phenomenon(Phenomenon):-
@@ -210,7 +217,7 @@ process_phenomenon(Phenomenon):-
     (
         PType='dynamic_phenomenon',!,
         process_dynamic_phenomenon(Phenomenon)
-    )),!.
+    )).
 
 process_event(Phenomenon):-
     %find valid groundings
@@ -230,7 +237,7 @@ process_state(Phenomenon):-
         (
         ProcessedFormula,
         IL\=[],
-        assert_if_not_exists(state_intervals(Phenomenon,IL))
+        assertz(state_intervals(Phenomenon,IL))
         )
     ,_).
 
@@ -241,11 +248,11 @@ process_dynamic_phenomenon(Phenomenon):-
         (
         ProcessedFormula,
         IL\=[],
-        assert_if_not_exists(dynamic_phenomenon_intervals_internal(Phenomenon,IL))
+        assertz(dynamic_phenomenon_intervals_internal(Phenomenon,IL))
         )
     ,_).
 
 dynamic_phenomenon_intervals(Phenomenon,IL):-
-    phenomenon_type(Phenomenon,dynamic_phenomenon,user),
+    phenomenon_type_candidate_user(Phenomenon,dynamic_phenomenon),
     dynamic_phenomenon_intervals_internal(Phenomenon,IIL),
     clean_from_unk(IIL,IL),IL\=[].

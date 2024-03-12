@@ -1,12 +1,8 @@
-% Author: Manolis Pitsikalis
-%
-% - Operators of the language -
-%
-
 :-op(1149,fx,event_phenomenon).
 :-op(1149,fx,state_phenomenon).
 :-op(1149,fx,dynamic_phenomenon).
 :-op(1199,xfx,:=).
+:-op(1199,xfx,=:).
 
 :-op(1048,xfy,before).
 :-op(1047,xfy,overlaps).
@@ -21,19 +17,22 @@
 :-op(1040,xfy,intersection).
 :-op(1039,xfy,union).
 :-op(1038,xfy,~>).
-:-op(1037,xfy,<@).
-:-op(1037,xfy,>=@).
-:-op(1037,xfy,=@).
 
-:-op(1036,xfy,aand).
-:-op(1035,xfy,or).
-:-op(1034,xfy,and).
-:-op(1033,xfy,in).
-:-op(1032,fy,tnot).
-:-op(1032,fy,gtnot).
+:-op(1037,xfy,aand).
+:-op(1036,xfy,or).
+:-op(1035,xfy,and).
+:-op(1034,fy,tnot).
 
-op_list([aand,tnot,gtnot,and,or,in,
-        <@,>=@,=@,~>,union,intersection,complement,
-        before,overlaps,meets,contains,starts,finishes,equals,filter]).
+op_list([aand,tnot,and,or,
+           ~>,union,intersection,complement,
+           before,overlaps,meets,contains,starts,finishes,equals]).
 
-instant_op_list([and,or,gtnot,tnot,start,end]).
+instant_op_list([and,or,tnot,start,end]).
+temporal_op_list([~>,union,intersection,complement]).
+temporal_relation_list([before,overlaps,meets,contains,starts,finishes,equals]).
+
+infix_operators([aand,and,or,
+           ~>,union,intersection,complement,
+           before,overlaps,meets,contains,starts,finishes,equals]).
+
+prefix_operators([tnot, start, end]).

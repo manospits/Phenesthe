@@ -1,9 +1,5 @@
 Phenesthe - Maritime use case example
 
-!!!Note Git LFS is required to download the compressed dataset file.!!!
-https://github.com/git-lfs/git-lfs/blob/main/docs/man/git-lfs-fetch.1.ronn
-
-
 1. Perform all experiments for window sizes 2,4,8,16 and 32 hours and step 2 hours.
     - open a terminal
     - run the ./run_experiments.sh

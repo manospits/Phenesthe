@@ -1,7 +1,3 @@
-% Author: Manolis Pitsikalis
-%
-% Temporal relations computation
-
 :-discontiguous compute_before_intervals/6.
 
 compute_relation_intervals(meets,FT,A,B,IL,RA,Tc):-compute_meets_intervals(FT,A,B,IL,RA,Tc).
@@ -24,10 +20,6 @@ compute_before_intervals(_,[A|R],[],IL,NonRedundantA,Tcrit):-
 
 %------------------------------------------------------------
 %participating phenomena are either states or events
-% end of A is before start of B / A occurs befor B
-% in this case check if there is an interval that also satisfies the above
-% if there is then check again
-% a and b must be contiguous
 compute_before_intervals(d,[A|RL],[B|RR],[[TS,TE]|IL],NonRedundantA,Tcrit):-
     temporal_information(A,_TSA,TEA,_),
     temporal_information(B,TSB,_TEB,_),
@@ -36,16 +28,12 @@ compute_before_intervals(d,[A|RL],[B|RR],[[TS,TE]|IL],NonRedundantA,Tcrit):-
     add_if_not_redundant(AP,[TS,TE],Tcrit,NonRedundantAL,NonRedundantA),
     compute_before_intervals(d,NRL,RR,IL,NonRedundantAL,Tcrit).
 
-% a ends after b, therefore you can check next a  
-% if a holds in intervals they are disjoint here
 compute_before_intervals(d,[A|RL],[B|RR],IL,NonRedundantA,Tcrit):-
     temporal_information(A,_TSA,TEA,_),
     temporal_information(B,TSB,_TEB,_),
     geq(TEA,TSB),
     compute_before_intervals(d,[A|RL],RR,IL,NonRedundantA,Tcrit).
 
-%Check if the next interval of a satisfies the condition
-%if yes then check it as well
 compute_before_intervals2(d,[_|RL],B,NIL,I,AP):-
     RL=[A2|_],
     temporal_information(A2,_TSA2,TEA2,_),
@@ -53,9 +41,6 @@ compute_before_intervals2(d,[_|RL],B,NIL,I,AP):-
     lt(TEA2,TSB),
     compute_before_intervals2(d,RL,B,NIL,I,AP).
 
-% if the next interval does not satisfy the condition
-% or there isn't another interval
-% then create the interval for a before b
 compute_before_intervals2(d,[A|RL],B,RL,[TSA,TEB],A):-
     temporal_information(A,TSA,_TEA,_),
     temporal_information(B,TSB,TEB,_),
@@ -70,9 +55,9 @@ compute_before_intervals2(d,[A|RL],B,RL,[TSA,TEB],A):-
         )
     ).
 
-%compute_before_intervals2(d,[A|[]],B,[],[TSA,TEB],A):-
-    %temporal_information(A,TSA,_TEA,_),
-    %temporal_information(B,_TSB,TEB,_).
+compute_before_intervals2(d,[A|[]],B,[],[TSA,TEB],A):-
+    temporal_information(A,TSA,_TEA,_),
+    temporal_information(B,_TSB,TEB,_).
 
 
 %-----------------------------------------------------------
