@@ -28,7 +28,7 @@ User defined phenomena can be processed in a sequential manner by following the 
 ![YSP dependency graph](ysp_dep.png "YSP dependency graph")
 
 
-However, if possible they can also be executed in parallel. In Phenesthe we implement dependency-aware parallelisation whereby phenomena definitions that have no pending dependencies are processed in parallel via a Master-Worker paradigm. Here, the master checks for phenomena definitions that do not have any unmet dependencies and inserts them in the processing queue. Workers remove phenomena definitions from the processing queue, process them, and notify the master as soon as they complete. This process goes on until all the user defined phenomena are processed. 
+However, if possible they can also be processed in parallel. In Phenesthe we implement dependency-aware parallelisation whereby phenomena definitions that have no pending dependencies are processed in parallel via a Master-Worker paradigm. Here, the master checks for phenomena definitions that do not have any unmet dependencies and inserts them in the processing queue. Workers remove phenomena definitions from the processing queue, process them, and notify the master as soon as they complete. This process goes on until all the user defined phenomena are processed. 
 
 By default dependency aware parallelisation is enabled. If required, dependency aware parallelisation can be turned off by setting the following:
 
